@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Negotiation Skills — Participation Dashboard | A9018872</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#040d1a;color:#e8eef6;min-height:100vh}
+#gate{position:fixed;inset:0;background:linear-gradient(135deg,#040d1a,#071a38);display:flex;align-items:center;justify-content:center;z-index:9999}
+.gate-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:40px 44px;width:340px;text-align:center;backdrop-filter:blur(12px)}
+.gate-card h2{font-size:1.3rem;font-weight:700;margin-bottom:6px}
+.gate-card p{font-size:.85rem;color:rgba(255,255,255,.5);margin-bottom:28px}
+.gate-card input{width:100%;padding:12px 16px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:1rem;margin-bottom:14px;outline:none}
+.gate-card input:focus{border-color:#0077b6}
+.gate-card button{width:100%;padding:12px;border:none;border-radius:8px;background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;font-size:1rem;font-weight:700;cursor:pointer}
+.gate-err{color:#ff6b6b;font-size:.8rem;margin-top:8px;display:none}
+header{background:linear-gradient(135deg,#04122e 0%,#0b2560 60%,#0077b6 100%);padding:22px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.hd-left .badge{font-size:.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:6px}
+.hd-left h1{font-size:1.4rem;font-weight:800}
+.hd-left .sub{font-size:.82rem;color:rgba(255,255,255,.55);margin-top:3px}
+.hd-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#lastUpdate{font-size:.75rem;color:rgba(255,255,255,.4)}
+.btn-sm{padding:8px 16px;border-radius:8px;border:none;font-size:.8rem;font-weight:700;cursor:pointer}
+.btn-refresh{background:rgba(255,255,255,.1);color:#fff}
+.btn-refresh:hover{background:rgba(255,255,255,.18)}
+.btn-setup{background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff}
+.btn-logout{background:rgba(255,255,255,.07);color:rgba(255,255,255,.5)}
+#setupBanner{background:linear-gradient(135deg,rgba(0,119,182,.15),rgba(0,180,216,.15));border:1px solid rgba(0,119,182,.3);border-radius:12px;margin:24px 32px 0;padding:20px 24px;display:none}
+#setupBanner h3{color:#00b4d8;margin-bottom:6px;font-size:1rem}
+#setupBanner p{font-size:.83rem;color:rgba(255,255,255,.6);line-height:1.6}
+.url-form{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.url-form input{flex:1;min-width:260px;padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:#fff;font-size:.85rem;outline:none}
+.url-form input:focus{border-color:#0077b6}
+.url-form button{padding:10px 18px;border-radius:8px;border:none;background:#0077b6;color:#fff;font-weight:700;cursor:pointer;font-size:.85rem;white-space:nowrap}
+main{padding:24px 32px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:28px}
+.stat{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:20px 22px}
+.stat .num{font-size:2rem;font-weight:800;line-height:1}
+.stat .lbl{font-size:.75rem;color:rgba(255,255,255,.45);margin-top:6px;text-transform:uppercase;letter-spacing:.8px}
+.stat.c1 .num{color:#06d6a0}.stat.c2 .num{color:#48cae4}.stat.c3 .num{color:#0077b6}.stat.c4 .num{color:#90e0ef}
+.section-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,.4);margin-bottom:14px}
+.orgs-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:28px}
+.org-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:16px 18px}
+.org-name{font-size:.82rem;font-weight:700;margin-bottom:10px}
+.bar-bg{background:rgba(255,255,255,.08);border-radius:4px;height:6px;margin-bottom:5px;overflow:hidden}
+.bar-fill{height:6px;border-radius:4px;transition:width .8s ease}
+.bar-labels{display:flex;justify-content:space-between;font-size:.7rem;color:rgba(255,255,255,.4)}
+.table-wrap{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden}
+.table-toolbar{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;gap:12px;flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,.07)}
+.table-toolbar input{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px 14px;color:#fff;font-size:.85rem;width:240px;outline:none}
+.table-toolbar input:focus{border-color:#0077b6}
+.filter-btns{display:flex;gap:8px;flex-wrap:wrap}
+.f-btn{padding:6px 14px;border-radius:20px;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.55);font-size:.75rem;cursor:pointer}
+.f-btn.active{background:#0077b6;border-color:#0077b6;color:#fff;font-weight:700}
+table{width:100%;border-collapse:collapse}
+th{padding:11px 16px;text-align:left;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:rgba(255,255,255,.35);border-bottom:1px solid rgba(255,255,255,.07)}
+td{padding:11px 16px;font-size:.83rem;border-bottom:1px solid rgba(255,255,255,.05)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.03)}
+.badge-status{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:700}
+.s-done{background:rgba(6,214,160,.15);color:#06d6a0;border:1px solid rgba(6,214,160,.25)}
+.s-started{background:rgba(0,180,216,.15);color:#00b4d8;border:1px solid rgba(0,180,216,.25)}
+.s-no{background:rgba(255,255,255,.06);color:rgba(255,255,255,.35);border:1px solid rgba(255,255,255,.1)}
+.score-dots{display:flex;gap:3px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.12)}
+.dot.on{background:#06d6a0}
+.ts{color:rgba(255,255,255,.3);font-size:.73rem}
+#noRows{padding:40px;text-align:center;color:rgba(255,255,255,.25);font-size:.9rem}
+@media(max-width:600px){main{padding:16px}header{padding:16px}}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="gate-card">
+    <div style="font-size:2rem;margin-bottom:12px">🤝</div>
+    <h2>Dashboard Access</h2>
+    <p>Negotiation Skills Simulation · A9018872</p>
+    <input type="password" id="gateInput" placeholder="Access code" autocomplete="off">
+    <button onclick="checkGate()">Enter Dashboard</button>
+    <div class="gate-err" id="gateErr">Incorrect access code</div>
+  </div>
+</div>
+
+<header>
+  <div class="hd-left">
+    <div class="badge">ITCILO · ILO · A9018872</div>
+    <h1>Participation Dashboard</h1>
+    <div class="sub">Negotiation Skills for Effective Collective Bargaining · 61 Participants</div>
+  </div>
+  <div class="hd-right">
+    <span id="lastUpdate"></span>
+    <button class="btn-sm btn-refresh" onclick="loadData()">⟳ Refresh</button>
+    <button class="btn-sm btn-setup" onclick="showSetup()">⚙ Configure</button>
+    <button class="btn-sm" onclick="resetAllProgress()" style="background:rgba(220,50,50,.25);color:#ff8a80;border:1px solid rgba(220,50,50,.35)">🗑 Reset all</button>
+    <button class="btn-sm btn-logout" onclick="logout()">Sign out</button>
+  </div>
+</header>
+
+<div id="setupBanner">
+  <h3>⚙ Connect a Firebase backend — see results from all participant devices</h3>
+  <p>Without a backend, the dashboard only shows data from simulations run in <em>this browser</em>.<br>
+  Connect a free Firebase Realtime Database to collect results from all 61 participants.</p>
+  <p style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.5)">
+    <strong style="color:rgba(255,255,255,.7)">Firebase setup (3 min):</strong>
+    Go to <a href="https://console.firebase.google.com" target="_blank" style="color:#48cae4">console.firebase.google.com</a> →
+    Add project → Build → Realtime Database → Create database → Start in <em>test mode</em> →
+    Copy the database URL and paste below. Then update <code style="color:#06d6a0">config.json</code> in the repository with the same URL.
+  </p>
+  <div class="url-form">
+    <input type="text" id="scriptUrl" placeholder="https://your-project-default-rtdb.firebaseio.com">
+    <button onclick="saveUrl()">Save &amp; test</button>
+    <button id="clearUrlBtn" onclick="clearUrl()" style="background:rgba(220,50,50,.5);display:none">✕ Clear</button>
+  </div>
+</div>
+
+<main>
+  <div class="stats">
+    <div class="stat c1"><div class="num" id="sTotal">61</div><div class="lbl">Enrolled</div></div>
+    <div class="stat c2"><div class="num" id="sStarted">—</div><div class="lbl">Started</div></div>
+    <div class="stat c3"><div class="num" id="sCompleted">—</div><div class="lbl">Completed</div></div>
+    <div class="stat c4"><div class="num" id="sAvg">—</div><div class="lbl">Avg Score</div></div>
+  </div>
+
+  <div class="section-title">Progress by country / organisation</div>
+  <div class="orgs-row" id="orgsRow"></div>
+
+  <div class="table-wrap">
+    <div class="table-toolbar">
+      <input type="text" id="search" placeholder="Search by name…" oninput="renderTable()">
+      <div class="filter-btns">
+        <button class="f-btn active" data-filter="all" onclick="setFilter(this)">All (61)</button>
+        <button class="f-btn" data-filter="completed" onclick="setFilter(this)">Completed</button>
+        <button class="f-btn" data-filter="started" onclick="setFilter(this)">Started</button>
+        <button class="f-btn" data-filter="not_started" onclick="setFilter(this)">Not started</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>#</th><th>Name</th><th>Organisation</th><th>Country</th><th>Track</th><th>Status</th><th>Score</th><th>Last activity</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div id="noRows" style="display:none">No participants match this filter.</div>
+    </div>
+  </div>
+</main>
+
+<script>
+const ACCESS_CODE = 'negsim2026dash';
+const TRACK_NAMES = {A:'Workers/Union',B:'Employer/Mgmt',C:'Bargaining Council',D:'Labour Relations',E:'Senior Leaders',F:'Government/Legal',G:'International'};
+const COUNTRY_COLORS = {'Ghana':'#0077b6','Nigeria':'#00b4d8','South Africa':'#06d6a0','Uzbekistan':'#90e0ef','Indonesia':'#48cae4','Malaysia':'#023e8a','Philippines':'#0096c7','Sweden':'#caf0f8','Italy':'#ade8f4','International Organisation':'#4cc9f0'};
+
+const ROSTER = [
+  {id:'p01',name:'Lordilia Asiedu Boateng',org:'Volta River Authority',country:'Ghana',title:'Senior HR Officer',track:'B'},
+  {id:'p02',name:'Miriam Lartekai Darke',org:'Volta River Authority',country:'Ghana',title:'Director Commercial Services & Chair SJNC',track:'E'},
+  {id:'p03',name:'Angela Yasmin Heymann',org:'Volta River Authority',country:'Ghana',title:'Director Legal',track:'E'},
+  {id:'p04',name:'Kwaku Sarpong Mensah',org:'Volta River Authority',country:'Ghana',title:'Director Hydro Generation',track:'B'},
+  {id:'p05',name:'Paul Otoo Seniagya',org:'Volta River Authority',country:'Ghana',title:'Director Finance',track:'B'},
+  {id:'p06',name:'Adetokunbo Oludaisi Adetuwo',org:'NIMASA',country:'Nigeria',title:'Assistant Director',track:'F'},
+  {id:'p07',name:'Muhammad Bukar Lawan',org:'Fed. Ministry Marine & Blue Economy',country:'Nigeria',title:'Senior Marine Engineer',track:'F'},
+  {id:'p08',name:'Hussaina Hassan Mohammed',org:'NIMASA',country:'Nigeria',title:'Assistant Chief Labour Officer',track:'D'},
+  {id:'p09',name:'Olajumoke Ajibike Olufadeju',org:'NIMASA',country:'Nigeria',title:'PA to Director-General',track:'F'},
+  {id:'p10',name:'James Oshoma Omogiafo',org:'NIMASA',country:'Nigeria',title:'Asst Director Maritime Labour Relations',track:'F'},
+  {id:'p11',name:'Abidemi Onikoro Falana',org:'NIMASA',country:'Nigeria',title:'Principal Legal Officer',track:'F'},
+  {id:'p12',name:'Sani Adamu Usaini',org:'Fed. Ministry Marine & Blue Economy',country:'Nigeria',title:'Assistant Chief Marine Officer',track:'F'},
+  {id:'p13',name:'Linah Jiyane',org:'PHSDSBC',country:'South Africa',title:'2nd Deputy President',track:'C'},
+  {id:'p14',name:'Sifiso Zakhele Jonas Khumalo',org:'PHSDSBC',country:'South Africa',title:'Deputy Director: Collective Bargaining',track:'C'},
+  {id:'p15',name:'Masedi Lonkokile',org:'PHSDSBC',country:'South Africa',title:'National Negotiator',track:'C'},
+  {id:'p16',name:'Bongani Lose Lose',org:'Dept of Health',country:'South Africa',title:'Director',track:'E'},
+  {id:'p17',name:'Ramotsoge Charles Mabula',org:'PHSDSBC',country:'South Africa',title:'Deputy Director: Employment Relations',track:'C'},
+  {id:'p18',name:'Mashego Solomon Mahlatjie',org:'PHSDSBC',country:'South Africa',title:'Director LR & Employer Chief Negotiator',track:'E'},
+  {id:'p19',name:'Thabiso Kenneth Malemela',org:'Dept of Health Mpumalanga',country:'South Africa',title:'Manager: Labour Relations',track:'D'},
+  {id:'p20',name:'Nkhensani Didah Maluleke',org:'Public Servants Association',country:'South Africa',title:'Shop Steward — Social Work',track:'A'},
+  {id:'p21',name:'Masapa Macdonald Mangoedi',org:'PHSDSBC',country:'South Africa',title:'Manager: Collective Bargaining',track:'C'},
+  {id:'p22',name:'David Paseka Maqina',org:'Free State Dept of Health',country:'South Africa',title:'Director',track:'E'},
+  {id:'p23',name:'Ramadimetja Patience Mokoka',org:'Dept of Social Development',country:'South Africa',title:'Deputy Director: Labour Relations',track:'D'},
+  {id:'p24',name:'Madelain Müller',org:'Public Servants Association',country:'South Africa',title:'Chief Financial Officer',track:'E'},
+  {id:'p25',name:'Boitumelo Patience Phaedi',org:'PHSDSBC',country:'South Africa',title:'Acting Deputy Director: Employee Relations',track:'C'},
+  {id:'p26',name:'Ntata Josias Sekgota',org:'PHSDSBC',country:'South Africa',title:'Chief Negotiator — NUPSAW',track:'E'},
+  {id:'p27',name:'Mpumelelo Selby Sibiya',org:'PHSDSBC',country:'South Africa',title:'General Secretary',track:'E'},
+  {id:'p28',name:'Siphamandla Cedric Sihlangu',org:'SAMATU',country:'South Africa',title:'General Secretary',track:'E'},
+  {id:'p29',name:'Thibogang Talbot Thole',org:'PHSDSBC',country:'South Africa',title:'Chief Negotiator — DENOSA',track:'E'},
+  {id:'p30',name:'Madinabonu Abdukarimova',org:'Federation of Trade Unions of Uzbekistan',country:'Uzbekistan',title:'Officer',track:'A'},
+  {id:'p31',name:'Eka Margishvili',org:'Confederation of Employers of Uzbekistan',country:'Uzbekistan',title:'Executive Director',track:'B'},
+  {id:'p32',name:'Amirbek Narzullaev',org:'Federation of Trade Unions of Uzbekistan',country:'Uzbekistan',title:'Officer',track:'A'},
+  {id:'p33',name:'Abyan Pras Sahala',org:'APINDO',country:'Indonesia',title:'HC Business Transformation Specialist',track:'B'},
+  {id:'p34',name:'Julia Harter',org:'European Patent Office',country:'International Organisation',title:'Lawyer',track:'G'},
+  {id:'p35',name:'Matt Ray Allan Sevenants',org:'EFTA',country:'International Organisation',title:'HR Partner',track:'G'},
+  {id:'p36',name:'Amran Bin Che Rose',org:'Malaysian Employers Federation',country:'Malaysia',title:'Senior Consultant Legal & IR',track:'B'},
+  {id:'p37',name:'Elizabeth Gomez',org:'Mitsumi Philippines Workers Union ALU',country:'Philippines',title:'Union Representative',track:'A'},
+  {id:'p38',name:'Refitlhile Dominic Baloyi',org:'PSCBC',country:'South Africa',title:'Shop Steward',track:'A'},
+  {id:'p39',name:'Frederik Johannes de Bruin',org:'PSCBC',country:'South Africa',title:'General Secretary',track:'E'},
+  {id:'p40',name:'Mompati Jones Galorale',org:'PSCBC',country:'South Africa',title:'Chief Negotiator',track:'E'},
+  {id:'p41',name:'Modise Lesley Letsatsi',org:'Public Servants Association',country:'South Africa',title:'Labour Relations Officer',track:'D'},
+  {id:'p42',name:'Rueben Mpono Maleka',org:'PSCBC',country:'South Africa',title:'Shop Steward',track:'A'},
+  {id:'p43',name:'Tinyiko Percy Mashele',org:'GPSSBC',country:'South Africa',title:'Senior Officer',track:'C'},
+  {id:'p44',name:'Joseph Matlhogonolo Mashigo',org:'Public Servants Association',country:'South Africa',title:'Shop Steward',track:'A'},
+  {id:'p45',name:'Lorvica Eylon Matthews',org:'PSCBC',country:'South Africa',title:'Shop Steward',track:'A'},
+  {id:'p46',name:'Handsome Wandile Mgobhozi',org:'PSCBC',country:'South Africa',title:'Senior Manager',track:'C'},
+  {id:'p47',name:'Thokozile Elizabeth Mkhonto',org:'PSCBC',country:'South Africa',title:'Labour Relations Officer',track:'D'},
+  {id:'p48',name:'Mkhululi Mntuyedwa',org:'PSCBC',country:'South Africa',title:'Labour Relations Officer',track:'D'},
+  {id:'p49',name:'Ananias Rankgere Mokebe',org:'PSCBC',country:'South Africa',title:'Labour Relations Officer',track:'D'},
+  {id:'p50',name:'Maipato Annacleta Morake',org:'PSCBC',country:'South Africa',title:'Shop Steward',track:'A'},
+  {id:'p51',name:'Oscar Fanizane Msweli',org:'PSCBC',country:'South Africa',title:'Labour Relations Officer',track:'D'},
+  {id:'p52',name:'Sharlaine Oodit',org:'PSCBC',country:'South Africa',title:'General Secretary',track:'E'},
+  {id:'p53',name:'Monkie David Phala',org:'PSCBC',country:'South Africa',title:'Shop Steward',track:'A'},
+  {id:'p54',name:'Godfrey Boitumelo Pheleo',org:'PSCBC',country:'South Africa',title:'Shop Steward',track:'A'},
+  {id:'p55',name:'Christopher Phiri',org:'PSCBC',country:'South Africa',title:'Senior Manager',track:'C'},
+  {id:'p56',name:'Mdaezane Samson Radebe',org:'DPSA',country:'South Africa',title:'Labour Relations Officer',track:'D'},
+  {id:'p57',name:'Victor Sakala',org:'Public Servants Association',country:'South Africa',title:'Labour Relations Officer',track:'D'},
+  {id:'p58',name:'Mathildah Kgomogadi Shaku',org:'PSCBC',country:'South Africa',title:'Labour Relations Officer',track:'D'},
+  {id:'p59',name:'Lesiba Simon Thobakgale',org:'PSCBC',country:'South Africa',title:'Shop Steward',track:'A'},
+  {id:'p60',name:'Sonja Bleuland van Oordt',org:'Ingka Group (IKEA)',country:'Sweden',title:'Co-worker Relations Leader',track:'B'},
+  {id:'p61',name:'Charles Crevier',org:'ITCILO',country:'Italy',title:'Programme Manager, SPGT',track:'G'},
+];
+
+let participation={}, activeFilter='all';
+
+function checkGate(){
+  const v=document.getElementById('gateInput').value;
+  if(v===ACCESS_CODE){localStorage.setItem('negsim_dash_auth',ACCESS_CODE);document.getElementById('gate').style.display='none';init();}
+  else{document.getElementById('gateErr').style.display='block';}
+}
+document.getElementById('gateInput').addEventListener('keydown',e=>{if(e.key==='Enter')checkGate();});
+function logout(){localStorage.removeItem('negsim_dash_auth');location.reload();}
+
+function resetAllProgress(){
+  if(!confirm('Reset ALL participant progress? This cannot be undone.'))return;
+  let n=0;
+  ROSTER.forEach(p=>{if(localStorage.getItem('negsim_'+p.id)!==null){localStorage.removeItem('negsim_'+p.id);n++;}});
+  participation={};updateStats();renderOrgs();renderTable();
+  document.getElementById('lastUpdate').textContent=`✓ Reset — ${n} records cleared`;
+}
+
+function init(){
+  if(localStorage.getItem('negsim_dash_auth')!==ACCESS_CODE)return;
+  document.getElementById('gate').style.display='none';
+  document.getElementById('setupBanner').style.display='none';
+  const url=(localStorage.getItem('negsim_track_url')||'').trim();
+  if(url)document.getElementById('scriptUrl').value=url;
+  loadData();
+}
+
+function saveUrl(){
+  const url=document.getElementById('scriptUrl').value.trim();
+  if(!url){alert('Please enter a URL');return;}
+  localStorage.setItem('negsim_track_url',url);
+  document.getElementById('setupBanner').style.display='none';
+  loadData();
+}
+function clearUrl(){localStorage.removeItem('negsim_track_url');document.getElementById('scriptUrl').value='';document.getElementById('clearUrlBtn').style.display='none';loadData();}
+function showSetup(){
+  const url=(localStorage.getItem('negsim_track_url')||'').trim();
+  document.getElementById('scriptUrl').value=url;
+  document.getElementById('clearUrlBtn').style.display=url?'inline-block':'none';
+  document.getElementById('setupBanner').style.display='block';
+}
+
+function loadData(){
+  participation={};
+  ROSTER.forEach(p=>{
+    const raw=localStorage.getItem('negsim_'+p.id);
+    if(raw){try{const d=JSON.parse(raw);participation[p.id]={status:d.event==='complete'?'completed':'started',score:d.score??null,total:d.total??10,ts:d.ts};}catch(e){}}
+  });
+  const url=(localStorage.getItem('negsim_track_url')||'').trim();
+  if(url&&url.includes('firebasedatabase')){
+    fetch(`${url.replace(/\/$/,'')}/negsim.json`).then(r=>r.json()).then(data=>{
+      if(!data)return;
+      Object.entries(data).forEach(([pid,d])=>{
+        if(!d)return;
+        participation[pid]={status:d.event==='complete'?'completed':'started',score:d.score??null,total:d.total??10,ts:d.ts};
+      });
+      finishLoad();
+    }).catch(()=>finishLoad());
+  } else {finishLoad();}
+}
+
+function finishLoad(){
+  updateStats();renderOrgs();renderTable();
+  document.getElementById('lastUpdate').textContent='Updated '+new Date().toLocaleTimeString();
+}
+
+function updateStats(){
+  const all=ROSTER.length;
+  const started=ROSTER.filter(p=>participation[p.id]).length;
+  const completed=ROSTER.filter(p=>participation[p.id]?.status==='completed').length;
+  const scores=ROSTER.filter(p=>participation[p.id]?.score!=null).map(p=>participation[p.id].score/participation[p.id].total*100);
+  const avg=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):null;
+  document.getElementById('sTotal').textContent=all;
+  document.getElementById('sStarted').textContent=started;
+  document.getElementById('sCompleted').textContent=completed;
+  document.getElementById('sAvg').textContent=avg!=null?avg+'%':'—';
+}
+
+function renderOrgs(){
+  const countries=[...new Set(ROSTER.map(p=>p.country))];
+  const row=document.getElementById('orgsRow');row.innerHTML='';
+  countries.forEach(c=>{
+    const members=ROSTER.filter(p=>p.country===c);
+    const done=members.filter(p=>participation[p.id]?.status==='completed').length;
+    const started=members.filter(p=>participation[p.id]).length;
+    const pct=Math.round(done/members.length*100);
+    const col=COUNTRY_COLORS[c]||'#0077b6';
+    row.innerHTML+=`<div class="org-card">
+      <div class="org-name">${c} <span style="color:rgba(255,255,255,.4);font-weight:400">(${members.length})</span></div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div>
+      <div class="bar-labels"><span>${done} completed</span><span>${started} started</span></div>
+    </div>`;
+  });
+}
+
+function setFilter(btn){
+  document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');activeFilter=btn.dataset.filter;renderTable();
+}
+
+function renderTable(){
+  const q=document.getElementById('search').value.toLowerCase();
+  let rows=ROSTER.filter(p=>{
+    if(q&&!p.name.toLowerCase().includes(q))return false;
+    if(activeFilter==='completed')return participation[p.id]?.status==='completed';
+    if(activeFilter==='started')return participation[p.id]&&participation[p.id].status!=='completed';
+    if(activeFilter==='not_started')return !participation[p.id];
+    return true;
+  });
+  const tb=document.getElementById('tbody');tb.innerHTML='';
+  if(!rows.length){document.getElementById('noRows').style.display='block';return;}
+  document.getElementById('noRows').style.display='none';
+  rows.forEach((p,i)=>{
+    const part=participation[p.id];
+    const status=part?(part.status==='completed'?'<span class="badge-status s-done">Completed</span>':'<span class="badge-status s-started">In progress</span>'):'<span class="badge-status s-no">Not started</span>';
+    let dots='';if(part?.score!=null){const total=part.total||10;for(let j=0;j<total;j++)dots+=`<div class="dot${j<part.score?' on':''}"></div>`;}
+    const scoreCell=part?.score!=null?`<div class="score-dots">${dots}</div><div style="font-size:.72rem;color:rgba(255,255,255,.4);margin-top:3px">${part.score}/${part.total||10}</div>`:'—';
+    const ts=part?.ts?`<div class="ts">${new Date(part.ts).toLocaleDateString()} ${new Date(part.ts).toLocaleTimeString()}</div>`:'—';
+    tb.innerHTML+=`<tr><td style="color:rgba(255,255,255,.3)">${i+1}</td><td style="font-weight:600">${p.name}</td><td style="color:rgba(255,255,255,.55)">${p.org}</td><td style="color:rgba(255,255,255,.55)">${p.country}</td><td><span style="background:rgba(0,119,182,.2);color:#48cae4;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700">${TRACK_NAMES[p.track]||p.track}</span></td><td>${status}</td><td>${scoreCell}</td><td>${ts}</td></tr>`;
+  });
+}
+
+window.addEventListener('load',()=>{
+  if(localStorage.getItem('negsim_dash_auth')===ACCESS_CODE){document.getElementById('gate').style.display='none';init();}
+});
+</script>
+</body>
+</html>

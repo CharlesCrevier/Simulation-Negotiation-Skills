@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Negotiation Skills Simulator | A9018872 | ITCILO</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:#04091a;color:#f0f4f8;min-height:100vh;overflow-x:hidden}
+#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+#app{position:relative;z-index:1;min-height:100vh}
+.screen{display:none;min-height:100vh;padding:20px}
+.screen.active{display:flex;flex-direction:column;align-items:center;justify-content:center;animation:fadeIn .5s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.header-bar{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.badge-itcilo{background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff;font-size:10px;font-weight:700;letter-spacing:2px;padding:5px 13px;border-radius:4px;text-transform:uppercase}
+.badge-ilo{background:linear-gradient(135deg,#023e8a,#0077b6);color:#fff;font-size:10px;font-weight:700;letter-spacing:2px;padding:5px 13px;border-radius:4px;text-transform:uppercase}
+.badge-course{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:rgba(240,244,248,.7);font-size:10px;font-weight:600;letter-spacing:1.5px;padding:5px 13px;border-radius:4px;text-transform:uppercase}
+.main-title{font-size:clamp(22px,4vw,42px);font-weight:700;background:linear-gradient(135deg,#90e0ef 0%,#00b4d8 40%,#0077b6 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;text-align:center;max-width:700px}
+.main-sub{font-size:15px;color:rgba(240,244,248,.55);margin-top:10px;text-align:center}
+.glass{background:rgba(255,255,255,0.045);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.09);border-radius:20px;padding:32px}
+.btn{border:none;font-family:inherit;cursor:pointer;font-size:15px;font-weight:600;border-radius:50px;padding:13px 34px;transition:all .22s}
+.btn-primary{background:linear-gradient(135deg,#0077b6,#00b4d8);color:#fff}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,119,182,.38)}
+.btn-outline{background:rgba(255,255,255,0.07);color:#f0f4f8;border:1px solid rgba(255,255,255,0.18)}
+.btn-outline:hover{background:rgba(255,255,255,0.12)}
+.btn-ghost{background:rgba(0,180,216,0.15);color:#90e0ef;border:1px solid rgba(0,180,216,0.3)}
+.btn-ghost:hover{background:rgba(0,180,216,0.25)}
+.hidden{display:none!important}
+.participants-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;width:100%;max-width:1000px}
+.pcard{background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:18px;cursor:pointer;transition:all .22s;position:relative;overflow:hidden}
+.pcard::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,119,182,0.1),rgba(0,180,216,0.1));opacity:0;transition:opacity .22s}
+.pcard:hover{border-color:rgba(0,180,216,0.5);transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.pcard:hover::before{opacity:1}
+.pavatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;margin-bottom:11px}
+.pname{font-size:14px;font-weight:600;margin-bottom:3px}
+.prole{font-size:11px;color:rgba(240,244,248,.5);margin-bottom:2px}
+.pdept{font-size:11px;color:#90e0ef;font-weight:500}
+.progress-wrap{width:100%;max-width:760px;margin-bottom:22px}
+.progress-row{display:flex;justify-content:space-between;margin-bottom:7px;font-size:12px;color:rgba(240,244,248,.5)}
+.prog-bg{background:rgba(255,255,255,0.09);border-radius:10px;height:5px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,#023e8a,#00b4d8);border-radius:10px;transition:width .6s ease}
+.scenario-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:20px;padding:30px;width:100%;max-width:760px}
+.badge-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.mod-tag{display:inline-flex;align-items:center;gap:7px;background:rgba(0,119,182,0.22);border:1px solid rgba(0,180,216,0.35);color:#90e0ef;font-size:11px;font-weight:600;padding:5px 13px;border-radius:50px}
+.skill-tag{display:inline-flex;align-items:center;gap:7px;background:rgba(0,180,216,0.18);border:1px solid rgba(0,180,216,0.35);color:#48cae4;font-size:11px;font-weight:600;padding:5px 13px;border-radius:50px}
+.ctx-bar{display:flex;align-items:center;gap:10px;background:rgba(0,119,182,0.09);border:1px solid rgba(0,119,182,0.25);border-radius:11px;padding:10px 14px;margin-bottom:22px;font-size:12.5px;color:rgba(240,244,248,.75);flex-wrap:wrap}
+.ctx-bar strong{color:#90e0ef}
+.stitle{font-size:18px;font-weight:600;margin-bottom:13px;color:#fff}
+.stext{font-size:14.5px;line-height:1.75;color:rgba(240,244,248,.82);margin-bottom:26px}
+.dprompt{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:rgba(240,244,248,.45);margin-bottom:13px}
+.opts{display:flex;flex-direction:column;gap:11px;margin-bottom:22px}
+.opt{display:flex;align-items:flex-start;gap:13px;background:rgba(255,255,255,0.04);border:2px solid rgba(255,255,255,0.09);border-radius:13px;padding:15px 18px;cursor:pointer;text-align:left;transition:all .2s;color:rgba(240,244,248,.82);font-size:13.5px;line-height:1.55;font-family:inherit;width:100%}
+.opt:hover:not([disabled]){background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.18)}
+.opt.selected{background:rgba(0,119,182,0.14);border-color:rgba(0,180,216,0.5)}
+.opt.correct{background:rgba(22,163,74,0.12);border-color:rgba(22,163,74,0.45);color:#fff}
+.opt.incorrect.was-selected{background:rgba(220,38,38,0.1);border-color:rgba(220,38,38,0.35);color:rgba(240,244,248,.55)}
+.opt.incorrect:not(.was-selected){background:rgba(255,255,255,0.02);border-color:rgba(255,255,255,0.05);color:rgba(240,244,248,.35)}
+.opt-letter{display:flex;align-items:center;justify-content:center;width:26px;height:26px;min-width:26px;border-radius:50%;background:rgba(255,255,255,0.1);font-size:12px;font-weight:700;transition:all .2s}
+.opt.correct .opt-letter{background:rgba(22,163,74,0.3);color:#4ade80}
+.opt.selected .opt-letter{background:rgba(0,180,216,0.35);color:#90e0ef}
+.opt.incorrect.was-selected .opt-letter{background:rgba(220,38,38,0.2);color:#f87171}
+.expl{background:rgba(22,163,74,0.08);border:1px solid rgba(22,163,74,0.22);border-radius:16px;padding:22px;margin-top:4px;animation:slideUp .4s ease}
+.expl-head{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.expl-icon{width:26px;height:26px;background:rgba(22,163,74,0.28);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px}
+.expl-title{font-size:14px;font-weight:600;color:#4ade80}
+.expl-text{font-size:13.5px;line-height:1.72;color:rgba(240,244,248,.82)}
+.mod-ref{display:inline-block;background:rgba(0,119,182,0.14);border:1px solid rgba(0,180,216,0.28);color:#90e0ef;font-size:11px;font-weight:600;padding:3px 11px;border-radius:50px;margin-top:13px}
+.skill-ref{display:inline-block;background:rgba(0,180,216,0.14);border:1px solid rgba(0,180,216,0.28);color:#48cae4;font-size:11px;font-weight:600;padding:3px 11px;border-radius:50px;margin-top:6px;margin-left:6px}
+.nav-row{display:flex;align-items:center;justify-content:flex-end;gap:11px;margin-top:18px}
+.profile-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:38px;text-align:center;max-width:480px;width:100%}
+.av-large{width:78px;height:78px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;margin:0 auto 18px}
+.pf-name{font-size:24px;font-weight:700;margin-bottom:5px}
+.pf-title{font-size:14px;color:#90e0ef;font-weight:500;margin-bottom:3px}
+.pf-dept{font-size:12px;color:rgba(240,244,248,.5);margin-bottom:18px}
+.org-pill{display:inline-flex;align-items:center;gap:7px;background:rgba(0,119,182,0.09);border:1px solid rgba(0,119,182,0.25);border-radius:50px;padding:7px 18px;font-size:12.5px;color:rgba(240,244,248,.65);margin-bottom:18px}
+.welcome-msg{font-size:14px;line-height:1.65;color:rgba(240,244,248,.65);margin-bottom:26px}
+.complete-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:44px;text-align:center;max-width:530px;width:100%}
+.trophy{font-size:56px;margin-bottom:18px}
+.c-title{font-size:26px;font-weight:700;background:linear-gradient(135deg,#90e0ef,#0077b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:7px}
+.c-sub{font-size:14px;color:rgba(240,244,248,.55);margin-bottom:24px}
+.score-box{background:rgba(22,163,74,0.09);border:1px solid rgba(22,163,74,0.25);border-radius:14px;padding:18px;margin-bottom:22px}
+.score-num{font-size:44px;font-weight:700;color:#4ade80}
+.score-lbl{font-size:13px;color:rgba(240,244,248,.55)}
+.learnings{text-align:left;margin-bottom:26px}
+.learnings h4{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:rgba(240,244,248,.45);margin-bottom:11px}
+.litem{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;color:rgba(240,244,248,.7);line-height:1.55;margin-bottom:8px}
+.ldot{color:#90e0ef;min-width:10px;margin-top:2px}
+.divider{height:1px;background:rgba(255,255,255,0.07);margin:22px 0}
+.cert-strip{background:linear-gradient(135deg,rgba(0,119,182,.12),rgba(0,180,216,.12));border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 20px;font-size:12px;color:rgba(240,244,248,.65);margin-bottom:20px}
+.flag{font-size:16px;margin-right:4px}
+@media(max-width:600px){.scenario-card{padding:18px}.participants-grid{grid-template-columns:1fr 1fr}.glass{padding:20px}}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<div id="app">
+
+<!-- WELCOME SCREEN -->
+<div class="screen active" id="screen-welcome">
+  <div class="header-bar">
+    <span class="badge-itcilo">ITCILO</span>
+    <span class="badge-ilo">ILO</span>
+    <span class="badge-course">A9018872</span>
+  </div>
+  <div class="main-title">Negotiation Skills<br>Decision Simulator</div>
+  <div class="main-sub">Effective Collective Bargaining &nbsp;·&nbsp; 25–29 May 2026, Turin</div>
+  <div style="margin-top:36px;max-width:580px;text-align:center">
+    <div class="glass" style="margin-bottom:28px;padding:24px 30px">
+      <p style="font-size:14px;line-height:1.7;color:rgba(240,244,248,.72)">Welcome to this interactive learning simulation. You will be placed in <strong style="color:#90e0ef">your own professional context</strong> and face <strong style="color:#48cae4">10 realistic negotiation scenarios</strong> drawn from collective bargaining practice.<br><br>For each situation, choose the most appropriate course of action — then discover <em>why</em> one approach is preferred and what the course principles say.</p>
+    </div>
+    <button class="btn btn-primary" style="font-size:16px;padding:15px 44px" onclick="showScreen('screen-select')">Select Your Profile &rarr;</button>
+  </div>
+</div>
+
+<!-- SELECT SCREEN -->
+<div class="screen" id="screen-select">
+  <div class="header-bar">
+    <span class="badge-itcilo">ITCILO</span>
+    <span class="badge-course">Negotiation Skills · A9018872</span>
+  </div>
+  <div class="main-title" style="font-size:clamp(18px,3vw,30px);margin-bottom:8px">Who are you?</div>
+  <div class="main-sub" style="margin-bottom:28px">Select your name to receive your personalised simulation</div>
+  <div class="participants-grid" id="pGrid"></div>
+</div>
+
+<!-- PROFILE SCREEN -->
+<div class="screen" id="screen-profile">
+  <div class="profile-card" id="profileCard">
+    <div class="av-large" id="pfAvatar"></div>
+    <div class="pf-name" id="pfName"></div>
+    <div class="pf-title" id="pfTitle"></div>
+    <div class="pf-dept" id="pfDept"></div>
+    <div class="org-pill" id="pfOrg"></div>
+    <div class="welcome-msg" id="pfMsg"></div>
+    <button class="btn btn-primary" onclick="startSimulation()">Begin My 10 Scenarios &rarr;</button>
+  </div>
+</div>
+
+<!-- SCENARIO SCREEN -->
+<div class="screen" id="screen-scenario">
+  <div class="progress-wrap">
+    <div class="progress-row"><span id="progLabel">Scenario 1 of 10</span><span id="progScore">Score: 0 / 0</span></div>
+    <div class="prog-bg"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+  </div>
+  <div class="scenario-card" id="scenarioCard">
+    <div class="badge-row">
+      <div class="mod-tag">&#128218; <span id="modTag"></span></div>
+      <div class="skill-tag">&#127919; <span id="skillTag"></span></div>
+    </div>
+    <div class="ctx-bar" id="ctxBar"></div>
+    <div class="stitle" id="scTitle"></div>
+    <div class="stext" id="scSit"></div>
+    <div class="dprompt">What is the most effective course of action?</div>
+    <div class="opts" id="optsDiv"></div>
+    <div id="explDiv" class="hidden"></div>
+    <div class="nav-row" id="navRow">
+      <button class="btn btn-primary hidden" id="submitBtn" onclick="submitAnswer()">Submit Decision</button>
+      <button class="btn btn-ghost hidden" id="nextBtn" onclick="nextScenario()">Next Scenario &rarr;</button>
+      <button class="btn btn-primary hidden" id="finishBtn" onclick="showCompletion()">See My Results &rarr;</button>
+      <button class="btn btn-ghost hidden" id="skipBtn" onclick="skipScenario()" style="font-size:12px;padding:8px 14px;opacity:.7">Skip &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMPLETE SCREEN -->
+<div class="screen" id="screen-complete">
+  <div class="complete-card">
+    <div class="trophy">&#127942;</div>
+    <div class="c-title">Simulation Complete!</div>
+    <div class="c-sub" id="cSub"></div>
+    <div class="score-box"><div class="score-num" id="cScore"></div><div class="score-lbl">correct decisions out of 10</div></div>
+    <div class="divider"></div>
+    <div class="learnings"><h4>Key Negotiation Principles Applied</h4><div id="cLearnings"></div></div>
+    <div class="cert-strip">&#127891;&nbsp; Upon completing this programme, you will receive an <strong>ITCILO Certificate of Achievement</strong> — Negotiation Skills for Effective Collective Bargaining, A9018872</div>
+    <div style="display:flex;gap:11px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-outline" onclick="showScreen('screen-select')">Try Another Profile</button>
+      <button class="btn btn-primary" onclick="restartSame()">Replay My Scenarios</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app -->
+<script>
+// ── CANVAS ANIMATION ──────────────────────────────────────────────────────────
+(function(){
+  const c=document.getElementById('bgCanvas'),ctx=c.getContext('2d');
+  let W,H,particles=[],time=0;
+  function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}
+  window.addEventListener('resize',resize);resize();
+  function mkP(){return{x:Math.random()*W,y:Math.random()*H,r:Math.random()*2+.5,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,hue:190+Math.random()*40,alpha:Math.random()*.5+.1,wo:Math.random()*Math.PI*2}}
+  for(let i=0;i<140;i++)particles.push(mkP());
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    const g=ctx.createLinearGradient(0,0,W,H);
+    g.addColorStop(0,'#04091a');g.addColorStop(.5,'#050e22');g.addColorStop(1,'#030815');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    const waves=[{y:.6,amp:55,freq:.007,spd:.35,col:'rgba(0,119,182,0.13)'},{y:.72,amp:40,freq:.009,spd:.5,col:'rgba(0,180,216,0.10)'},{y:.82,amp:28,freq:.012,spd:.65,col:'rgba(2,62,138,0.09)'}];
+    waves.forEach(w=>{ctx.beginPath();ctx.moveTo(0,H);for(let x=0;x<=W;x+=4){ctx.lineTo(x,H*w.y+Math.sin(x*w.freq+time*w.spd)*w.amp);}ctx.lineTo(W,H);ctx.closePath();ctx.fillStyle=w.col;ctx.fill();});
+    particles.forEach(p=>{
+      const wy=H*.7+Math.sin(p.x*.007+time*.35+p.wo)*50,inf=Math.max(0,1-Math.abs(p.y-wy)/100),r=p.r*(1+inf*.7),a=p.alpha*(.35+inf*.65);
+      const gr=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*4);
+      gr.addColorStop(0,`hsla(${p.hue},75%,65%,${a})`);gr.addColorStop(1,`hsla(${p.hue},75%,65%,0)`);
+      ctx.beginPath();ctx.arc(p.x,p.y,r*4,0,Math.PI*2);ctx.fillStyle=gr;ctx.fill();
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<-10)p.x=W+10;if(p.x>W+10)p.x=-10;if(p.y<-10)p.y=H+10;if(p.y>H+10)p.y=-10;
+    });
+    time+=.01;requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ── AVATAR PALETTE ─────────────────────────────────────────────────────────────
+const GRAD=[
+  'linear-gradient(135deg,#0077b6,#00b4d8)',
+  'linear-gradient(135deg,#023e8a,#0077b6)',
+  'linear-gradient(135deg,#0096c7,#48cae4)',
+  'linear-gradient(135deg,#005f73,#0a9396)',
+  'linear-gradient(135deg,#0077b6,#90e0ef)',
+  'linear-gradient(135deg,#03045e,#0077b6)',
+  'linear-gradient(135deg,#023e8a,#48cae4)',
+  'linear-gradient(135deg,#0096c7,#ade8f4)',
+  'linear-gradient(135deg,#005f73,#94d2bd)',
+  'linear-gradient(135deg,#0077b6,#caf0f8)'
+];
+
+// ── SCENARIO TRACKS ───────────────────────────────────────────────────────────
+// Track A: Workers & Union Representatives
+// Track B: Employer & Management Representatives
+// Track C: Bargaining Council Officials
+// Track D: Labour Relations Officers
+// Track E: Senior Leaders & Chief Negotiators
+// Track F: Government, Maritime & Legal Specialists
+// Track G: International & Multi-sector
+const TRACKS = {
+
+A: [
+  {mod:"Module 1 — Conflict Dynamics",skill:"Recognising Conflict Escalation",topic:"Reading the Conflict Path",
+   sit:"During a union meeting, members report that management has been ignoring grievances about unsafe working conditions for three months. Frustration is turning into calls for immediate strike action. As a shop steward, you need to assess where this dispute sits on the conflict path and decide your next move.",
+   opts:["Support the immediate strike call to show solidarity and force a quick resolution","Advise members to hold back while you formally escalate the unresolved grievances through the established collective bargaining procedure, explaining the legal protections this provides","Tell members to accept the situation for now since strikes are costly","Go directly to the media to publicise management's failure to respond"],
+   pref:1,expl:"The conflict path shows that disputes escalate when not channelled through structured processes. Escalating formally through collective bargaining procedures keeps the dispute within manageable legal bounds and protects members' rights. Unofficial strike action before formal channels are exhausted risks disciplinary outcomes; media escalation damages future negotiating relationships without resolving the underlying issue.",
+   ref:"ILO — Conflict Dynamics & the Conflict Path",sref:"Collective Bargaining Fundamentals"},
+
+  {mod:"Module 2 — Interests & Positions",skill:"Moving from Positions to Interests",topic:"Unlocking a Wage Stalemate",
+   sit:"Your union opened wage negotiations demanding a 12% increase. Management countered with 3%. After two rounds, both sides are entrenched. The facilitator suggests each side explain why the numbers matter to them, not just what the numbers are.",
+   opts:["Repeat the 12% demand more forcefully — consistency signals commitment","Shift the conversation from percentages to underlying needs: explain the cost-of-living pressures, real wage erosion, and member retention concerns your members face, and invite management to share their genuine cost constraints","Accept 3% to end the deadlock quickly","Walk out to signal seriousness and return only if management raises their offer"],
+   pref:1,expl:"Interests are the reasons behind positions. When both sides explain what they actually need — rather than defending a number — new solutions become visible. Workers' real needs may be around purchasing power and predictability; management's constraints may involve margins or cash flow. Understanding both opens space for creative solutions. Repeating a position more loudly or walking out closes that space.",
+   ref:"ILO — Interests, Needs & Positions Module",sref:"Interest-Based Bargaining"},
+
+  {mod:"Module 3 — Underlying Needs",skill:"Separating Needs from Demands",topic:"The Overtime Dispute",
+   sit:"Your members are demanding elimination of all compulsory overtime. Management says overtime is essential for operational continuity. You organise an informal meeting with three workers and two supervisors to better understand what is really driving each side.",
+   opts:["Focus only on the legal maximum hours — that is the only objective fact","Listen carefully to workers' concerns (fatigue, family time, unpredictability) and invite supervisors to explain their production pressures, then look for scheduling solutions that could address both","Insist the formal bargaining table is the only appropriate place for this conversation","Report supervisors' informal comments to the union committee as management admissions"],
+   pref:1,expl:"Needs analysis means listening beyond the stated demand to hear what people actually require. Workers may need predictability and rest; supervisors may need output guarantees. Solutions like voluntary overtime pools or flexible scheduling can meet both needs — but only if both sides understand each other's real constraints. Restricting the conversation to legal technicalities or formal process prevents this discovery.",
+   ref:"ILO — Identifying Underlying Needs",sref:"Active Listening & Needs Analysis"},
+
+  {mod:"Module 4 — BATNA",skill:"Preparing Your Best Alternative",topic:"What Is Our Walk-Away?",
+   sit:"Before the next bargaining round, your union executive asks: what is the union's BATNA if this negotiation fails? Several committee members assume the answer is automatically a strike.",
+   opts:["Confirm a strike is always the BATNA — there is nothing else to consider","Lead the committee through a structured analysis: list all realistic alternatives (arbitration, industrial action, mediation, lobbying), assess the cost and likely outcome of each, and identify which is genuinely strongest","Avoid discussing BATNA openly — it signals weakness to management","Recommend accepting any deal to avoid the cost and uncertainty of a strike"],
+   pref:1,expl:"BATNA (Best Alternative To a Negotiated Agreement) is not automatically a strike — it is whichever alternative is genuinely strongest if talks break down. Analysing all alternatives (arbitration, industrial action, mediation) objectively prevents both unnecessary escalation and unnecessary capitulation. A union that knows its real BATNA negotiates from a position of informed strength.",
+   ref:"ILO — BATNA Module",sref:"Negotiation Preparation"},
+
+  {mod:"Module 5 — ZOPA",skill:"Finding the Zone of Agreement",topic:"Is There Overlap?",
+   sit:"Your union's minimum acceptable wage increase is 6% — below that, you cannot recommend the deal to members. You believe management's maximum offer is somewhere around 8%. Before the next session, you try to determine whether a ZOPA exists.",
+   opts:["Open at 15% to create maximum room to negotiate downward","Use strategic questioning and selective information sharing to estimate whether an overlap exists between your minimum and their maximum, without prematurely revealing your floor","Offer 6% immediately since that is your minimum and you want to show good faith","Announce both sides' estimated positions publicly to create pressure for a deal"],
+   pref:1,expl:"The ZOPA is the range within which agreement is possible — where your minimum (6%) falls below their maximum (~8%), a deal is theoretically possible. The art is probing to confirm this without revealing your floor. Anchoring far too high destroys credibility; revealing your minimum immediately surrenders negotiating power; public announcements escalate rather than resolve.",
+   ref:"ILO — ZOPA & Negotiation Range",sref:"Strategic Positioning"},
+
+  {mod:"Module 6 — Communication",skill:"Active Listening Under Pressure",topic:"When Management Says Something Inflammatory",
+   sit:"In a bargaining session, management's chief negotiator makes a statement you believe is factually incorrect and potentially disrespectful to union members. Your colleagues are ready to respond loudly and emotionally.",
+   opts:["Allow your colleagues to respond immediately — emotional reactions show the issue matters to you","Pause, acknowledge the statement calmly, ask clarifying questions to confirm you understood correctly, then request a brief recess before responding substantively","Dismiss the statement as irrelevant and move on","Leave the room to de-escalate"],
+   pref:1,expl:"Active listening — acknowledging, clarifying, pausing — is essential in tense moments. A brief recess allows a considered, fact-based response rather than an emotional one. Immediate emotional reactions close down rational dialogue and hand emotional control to the other side. Dismissing or leaving abandons the negotiating space.",
+   ref:"ILO — Communication Skills Module",sref:"Active Listening & De-escalation"},
+
+  {mod:"Module 7 — Managing Emotions",skill:"Emotional Intelligence in Bargaining",topic:"When You Are Accused of Bad Faith",
+   sit:"Management's lead negotiator publicly accuses your union of being interested only in disruption, not in members' welfare. This provokes strong anger among your team and you feel it is deeply unfair.",
+   opts:["Respond with a matching personal accusation against management","Acknowledge the tension calmly, state clearly that the union will not respond to personal characterisations, note the accusation for the record, and propose returning to the substantive agenda","Accept the accusation without response to avoid further escalation","Suspend negotiations indefinitely until management formally retracts the statement"],
+   pref:1,expl:"Managing emotions in negotiation means neither suppressing them nor letting them drive decisions. Acknowledging the tension while redirecting to substance demonstrates emotional intelligence and keeps the process productive. Counter-attacks entrench conflict; silent acceptance may imply the accusation has merit; indefinite suspension hands leverage to management.",
+   ref:"ILO — Managing Emotions in Negotiation",sref:"Emotional Intelligence"},
+
+  {mod:"Module 8 — Mutual Gains",skill:"Integrative Bargaining",topic:"Expanding the Package",
+   sit:"Wage negotiations are stuck. Management cannot offer more than 5%. Your members need at least 6% to maintain real wages. A mutual gains approach is proposed: consider expanding the negotiation to include leave, training, and non-cash benefits.",
+   opts:["Refuse to discuss anything other than wages — package deals dilute the core demand","Explore whether a package combining 5% wages, two additional leave days, and an employer-funded training allowance might deliver more real value to members than 6% wages alone","Accept 5% to end the stalemate without exploring alternatives","Demand wages, leave, training, and allowances all at once without offering any trade-offs"],
+   pref:1,expl:"Mutual gains bargaining expands the deal space to find value both sides can exchange. If management has more flexibility on leave or training than on wages, a package may deliver greater real value than a marginally higher wage figure. Rigid single-issue insistence misses these opportunities; accepting without exploring leaves value unclaimed.",
+   ref:"ILO — Mutual Gains & Integrative Bargaining",sref:"Creating Value in Negotiation"},
+
+  {mod:"Module 9 — Face-Saving",skill:"Helping the Other Side Say Yes",topic:"When Management Needs an Exit",
+   sit:"After long negotiations, management has privately indicated they can agree to 7%, but they are concerned about being seen by their board as having 'given in' to the union. They ask whether the increase could be framed differently in any public announcement.",
+   opts:["Reject any reframing — the union must publicly claim full credit for winning the increase","Work with management to craft framing that allows both parties to explain the result positively to their own constituencies, as long as the substance (7% increase) is what members receive","Accept management's preferred framing entirely without any independent union communication","Leak the private concession to the media before the agreement is signed"],
+   pref:1,expl:"Face-saving is about helping the other party accept a good outcome without damaging their standing. If the substance is what members need, collaborative framing is a legitimate tool. Insisting on exclusive credit undermines future cooperation; leaking private information destroys trust and future negotiating relationships permanently.",
+   ref:"ILO — Face-Saving & Relationship Management",sref:"Relationship-Based Bargaining"},
+
+  {mod:"Module 10 — Managing Impasse",skill:"Breaking Deadlock",topic:"When Talks Collapse",
+   sit:"After six rounds of collective bargaining, talks have broken down. Neither party will move. Your committee is divided between calling a strike and referring to arbitration. You must recommend a path forward.",
+   opts:["Call an immediate strike — prolonged negotiation without results signals weakness","Conduct a structured review: revisit your BATNA, compare the likely outcomes of arbitration versus industrial action, consult members on their appetite for a strike, then propose the path that best serves member interests at least cost","Accept management's last offer without further analysis to end the uncertainty","Declare negotiations over with no further action"],
+   pref:1,expl:"Impasse requires disciplined BATNA analysis: is your alternative genuinely better than the offer? Arbitration is not weakness — it is a legitimate mechanism that may yield better outcomes than a costly strike. Consulting members before escalating to industrial action is responsible leadership. Immediate strike action without analysis risks members' livelihoods; inaction cedes all remaining leverage.",
+   ref:"ILO — Managing Impasse & Returning to the Table",sref:"Conflict Resolution"}
+],
+
+B: [
+  {mod:"Module 1 — Conflict Dynamics",skill:"Recognising Conflict Escalation",topic:"A Grievance Becoming a Crisis",
+   sit:"Three separate grievances filed by workers over the past month have not been formally acknowledged by management. The union has now written a letter warning of collective action. As an employer representative, you recognise this is escalating along the conflict path.",
+   opts:["Wait for the union to take formal action before responding — responding too quickly rewards pressure tactics","Immediately acknowledge all three grievances in writing, propose a structured joint meeting within five working days, and designate a management contact person for the process","Issue a counter-letter rejecting the threat of collective action as inappropriate","Refer the matter entirely to legal counsel and make no direct response to the union"],
+   pref:1,expl:"Early, structured acknowledgement of grievances prevents escalation along the conflict path. Formal acknowledgement does not concede merit — it signals good faith and keeps the dispute within manageable channels. Waiting for escalation before responding validates the union's perception that only pressure produces results. Immediate legal referral without direct engagement typically accelerates rather than resolves conflict.",
+   ref:"ILO — Conflict Dynamics & Early Resolution",sref:"Grievance Management"},
+
+  {mod:"Module 2 — Interests & Positions",skill:"Moving from Positions to Interests",topic:"Behind the Overtime Demand",
+   sit:"The union is demanding the elimination of all compulsory overtime. Your organisation's position is that overtime is operationally non-negotiable. The two positions appear incompatible. You are preparing for the next bargaining session.",
+   opts:["Restate the operational necessity of overtime firmly — positions must be defended consistently","Prepare to explore interests: understand why workers object to compulsory overtime (fatigue, family time, unpredictability) and identify whether your organisation's real need is guaranteed output rather than mandatory overtime specifically — which scheduling alternatives might meet both needs","Offer a small reduction in overtime hours as a compromise without exploring whether deeper solutions exist","Threaten to outsource the work if the union persists with this demand"],
+   pref:1,expl:"The union's position (no compulsory overtime) and your position (overtime is essential) both rest on underlying interests. The union's real need may be predictability and rest; your real need may be production continuity. Voluntary overtime pools, flexible rostering, or cross-training schemes may meet both. Exploring interests before defending positions opens this solution space.",
+   ref:"ILO — Interests, Needs & Positions Module",sref:"Interest-Based Bargaining"},
+
+  {mod:"Module 3 — Underlying Needs",skill:"Separating Needs from Demands",topic:"Salary Structure Negotiations",
+   sit:"The union is demanding a flat 10% increase for all staff grades. You know from payroll analysis that the pressure is concentrated in the lower grades where real wages have eroded most. A flat increase disproportionately benefits higher-paid staff in absolute terms.",
+   opts:["Offer a flat 5% as a counter-position without sharing your payroll analysis","Share the payroll analysis with the union and propose a graded structure that delivers a higher percentage to lower grades — addressing the real erosion problem more efficiently","Reject any increase — the organisation cannot afford pay rises","Offer the flat 10% to close the negotiation and avoid further discussion"],
+   pref:1,expl:"Sharing the underlying data allows both sides to focus on the real need (restoring lower-grade purchasing power) rather than on defending the surface demand (flat percentage). A graded structure may cost the organisation less while delivering more to those who need it most. Withholding this analysis perpetuates an adversarial dynamic that produces worse outcomes for both sides.",
+   ref:"ILO — Identifying Underlying Needs",sref:"Data-Driven Bargaining"},
+
+  {mod:"Module 4 — BATNA",skill:"Preparing Your Best Alternative",topic:"Knowing Your Own Walk-Away",
+   sit:"Your organisation is entering a critical collective agreement renewal. Before the first session, your HR director asks: what is the employer's BATNA if negotiations fail — should it be declared to the union?",
+   opts:["Declare your BATNA to the union upfront to demonstrate transparency and good faith","Conduct a rigorous internal BATNA analysis (outsourcing, restructuring, arbitration, extended lockout) — assess the realistic cost and feasibility of each option — but keep the result confidential while using it to define your genuine walk-away point","Assume the BATNA is always an extended lockout and plan accordingly","Skip BATNA analysis — the goal is always agreement, so alternatives are irrelevant"],
+   pref:1,expl:"BATNA analysis is essential preparation for any negotiation. Knowing your genuine walk-away prevents you from accepting an agreement worse than your best alternative — or from walking away from one that is actually better. Declaring your BATNA publicly weakens your position; skipping the analysis means you may accept or reject deals without a rational basis for comparison.",
+   ref:"ILO — BATNA Module",sref:"Negotiation Preparation"},
+
+  {mod:"Module 5 — ZOPA",skill:"Finding the Zone of Agreement",topic:"Estimating Whether a Deal Is Possible",
+   sit:"You believe your organisation can afford a maximum wage increase of 7% without operational cuts. The union opened at 12%. You need to assess whether a ZOPA exists before committing to further sessions.",
+   opts:["Refuse to continue bargaining until the union reduces its opening to a 'realistic' figure","Use the bargaining session to probe the union's interests and constraints without revealing your maximum — use questions, hypotheticals, and conditional proposals to estimate their minimum acceptable level","Immediately offer 7% to save time and close the negotiation","Publicly state your maximum of 7% to signal transparency"],
+   pref:1,expl:"The ZOPA exists where your maximum (7%) exceeds the union's minimum (unknown). Probing through questions and conditional proposals helps estimate whether that overlap exists, without surrendering your maximum. Publicly declaring your maximum immediately removes all flexibility; demanding the union reduce its opening position stalls the process before it begins.",
+   ref:"ILO — ZOPA & Negotiation Range",sref:"Strategic Positioning"},
+
+  {mod:"Module 6 — Communication",skill:"Active Listening Under Pressure",topic:"Listening to Understand, Not to Respond",
+   sit:"During a bargaining session, a union representative makes an extended statement about workers' feelings of disrespect and being undervalued. You believe the substantive claims are overstated, but you notice the emotional intensity is high.",
+   opts:["Immediately counter with statistics showing wages are competitive in your sector","Listen without interrupting, then reflect back what you heard: acknowledge the emotional dimension, note the specific concerns raised, and propose a structured agenda to address each point — beginning at the next session","Tell the representative that feelings are not a bargaining matter and redirect to data","Ask the representative to submit their concerns in writing rather than speaking in session"],
+   pref:1,expl:"Active listening in negotiation means hearing to understand, not merely to rebut. Reflecting back concerns — even emotional ones — signals respect and often de-escalates the room. Responding immediately with statistics dismisses the emotional reality and typically intensifies rather than resolves it. Redirecting to writing is appropriate for some contexts but in this case removes the opportunity for real dialogue.",
+   ref:"ILO — Communication Skills Module",sref:"Active Listening & De-escalation"},
+
+  {mod:"Module 7 — Managing Emotions",skill:"Emotional Intelligence in Bargaining",topic:"Staying Calm Under Accusation",
+   sit:"During a heated session, a union negotiator accuses management of deliberately stalling negotiations to run out the clock on the union's strike notice. You believe this accusation is inaccurate. Other management team members want to respond sharply.",
+   opts:["Match the accusation's intensity and challenge the union's own conduct in the negotiations","Acknowledge that tensions are high, state calmly that management's intent has been to reach a workable agreement, offer a concrete next step (a specific date and agenda for the next session) and return to substance","Accept the accusation without response to keep the peace","Walk out of the session to signal management's refusal to be accused"],
+   pref:1,expl:"Emotional intelligence in bargaining means responding to provocations with calm and substance rather than emotion. Acknowledging tension without accepting a false characterisation, then offering a concrete next step, demonstrates good faith and redirects the session. Counter-accusations escalate; silence implies partial acceptance; walking out loses the negotiating space.",
+   ref:"ILO — Managing Emotions in Negotiation",sref:"Emotional Intelligence"},
+
+  {mod:"Module 8 — Mutual Gains",skill:"Integrative Bargaining",topic:"A Package Deal Approach",
+   sit:"Wage negotiations are at an impasse. You cannot offer more than 6% without cutting positions. The union needs at least 7% to recommend acceptance to members. A mutual gains facilitator suggests exploring non-wage items.",
+   opts:["Refuse to discuss non-wage items — this is a wage negotiation and package deals create precedents you are not willing to set","Explore whether a package combining 6% wages, a new flexible working policy, and enhanced health benefits might meet the union's real member needs better than a straight 7% wage figure","Offer 7% and accept the associated need to reduce headcount, then manage the fallout","Concede the full union demand to avoid the reputational cost of a dispute"],
+   pref:1,expl:"Mutual gains bargaining creates value by expanding the deal space. If management has more flexibility on non-wage items (health benefits, flexibility) than on wages, a package deal may give the union greater real value at lower cost to the employer. Package deals do not set damaging precedents if they are structured as integrated agreements. Rigid single-issue bargaining leaves value unclaimed.",
+   ref:"ILO — Mutual Gains & Integrative Bargaining",sref:"Creating Value in Negotiation"},
+
+  {mod:"Module 9 — Face-Saving",skill:"Helping the Other Side Say Yes",topic:"Making It Possible for the Union to Accept",
+   sit:"After tough negotiations, you have reached 6.5% — which you believe is fair. The union's lead negotiator privately says members will find it hard to accept this after a 10% opening demand. They ask whether the announcement could be framed to help them.",
+   opts:["Refuse any joint framing — management will announce the outcome independently and the union can explain it however they choose","Work with the union to develop a joint communication that allows both sides to explain the outcome positively to their constituencies — without misrepresenting the substance","Issue a public statement emphasising management's 'victory' in holding the line","Let the union develop their own framing without any joint coordination"],
+   pref:1,expl:"Face-saving is a legitimate tool for closing deals. If the union's lead negotiator cannot sell 6.5% to members after opening at 10%, the deal may not hold even if signed. Jointly framing the outcome as a shared achievement — without misrepresenting substance — improves implementation. Claiming a 'win' publicly makes future cooperation harder.",
+   ref:"ILO — Face-Saving & Relationship Management",sref:"Relationship-Based Bargaining"},
+
+  {mod:"Module 10 — Managing Impasse",skill:"Breaking Deadlock",topic:"Options When Talks Break Down",
+   sit:"Collective agreement negotiations have reached a genuine impasse after five rounds. The union has filed a notice of potential strike action. Your organisation's CEO asks you to recommend next steps.",
+   opts:["Immediately apply for a court injunction to block the strike and make no further offers","Recommend a structured review: assess your BATNA (outsourcing, arbitration, a revised offer), consider requesting a mediator, and prepare a revised proposal that addresses the union's most important interests — present this at a resumed session before the strike notice expires","Accept all union demands to avoid the strike","Lock out workers pre-emptively before the strike notice expires"],
+   pref:1,expl:"Impasse management requires structured BATNA re-analysis and a genuine attempt to resolve the underlying interests before escalation. A mediator is a cost-effective resource that often unblocks impasse without litigation. Court injunctions address symptoms, not causes, and typically damage long-term relationships. Pre-emptive lockouts are high-risk legally and reputationally.",
+   ref:"ILO — Managing Impasse & Returning to the Table",sref:"Conflict Resolution"},
+],
+
+C: [
+  {mod:"Module 1 — Conflict Dynamics",skill:"Recognising Conflict Escalation",topic:"Diagnosing Where a Dispute Stands",
+   sit:"You are an officer at a bargaining council. A union has filed a formal referral claiming management has refused to bargain in good faith. Management denies this, arguing the union walked out of two sessions without reason. You must decide how to classify and process the dispute.",
+   opts:["Dismiss the referral since both sides have conflicting accounts and no clear facts","Open a formal conciliation process, interview both parties separately to establish a factual timeline, and classify the dispute according to its most likely position on the conflict path — whether it is a genuine deadlock or a process failure","Issue an advisory note recommending both parties try again without any formal process","Side with the union since they filed first"],
+   pref:1,expl:"A bargaining council officer's role includes accurately diagnosing disputes — not assuming either party is correct. A structured conciliation process with separate interviews establishes the factual basis for classification and intervention. Dismissing without investigation fails the dispute resolution mandate; advisory notes without process have no enforceability.",
+   ref:"ILO — Conflict Dynamics & the Conflict Path",sref:"Dispute Diagnosis"},
+
+  {mod:"Module 2 — Interests & Positions",skill:"Moving from Positions to Interests",topic:"Facilitating a Positional Impasse",
+   sit:"During a conciliation session you are facilitating, both parties are entrenched in their positions — the union insists on a 10% increase and management refuses to go above 4%. Neither side is explaining why. You need to shift the dynamic.",
+   opts:["Declare impasse and refer the matter to arbitration immediately","Suspend the joint session and meet each party separately — ask each to explain not what they want, but why they need it and what a bad outcome would cost them — then resume the joint session around interests rather than positions","Tell both parties their positions are unreasonable and impose a 7% compromise","Give both parties 48 hours to submit revised offers in writing"],
+   pref:1,expl:"A skilled conciliator shifts the conversation from positions to interests by creating separate space for each party to articulate their real concerns. This typically reveals that the underlying needs are closer than the stated positions suggest. Imposing a compromise without understanding either side's interests may produce an agreement that neither party can implement. Immediate referral to arbitration ends the conciliation prematurely.",
+   ref:"ILO — Interests, Needs & Positions Module",sref:"Facilitation Skills"},
+
+  {mod:"Module 3 — Underlying Needs",skill:"Separating Needs from Demands",topic:"Uncovering What Each Side Really Needs",
+   sit:"A union demands permanent employment for 200 fixed-term workers. Management insists on retaining flexibility. In separate pre-sessions, you ask both sides open questions about what they actually need from the employment arrangement.",
+   opts:["Accept both stated positions and try to find a middle number of conversions","Use the pre-session information to identify that workers need income security and access to benefits, while management needs operational flexibility for seasonal peaks — then draft options that could meet both: longer-term contracts with defined flexibility clauses, or a permanent pool with a managed fixed-term annex","Tell the union that legal permanence is unrealistic and advise them to lower their demand","Request a legal opinion on the minimum permanence obligations and enforce that"],
+   pref:1,expl:"Needs analysis by a skilled facilitator often reveals that parties' real needs are not mutually exclusive even when their stated positions appear to be. Income security for workers and operational flexibility for management can both be met through contract structures that neither side had proposed. Settling for a 'middle number' without understanding the underlying needs may produce an agreement that fails in practice.",
+   ref:"ILO — Identifying Underlying Needs",sref:"Interest Mapping"},
+
+  {mod:"Module 4 — BATNA",skill:"Preparing Your Best Alternative",topic:"Helping Parties Understand Their Alternatives",
+   sit:"In a conciliation session, one party threatens to walk away and 'take their chances in arbitration'. You suspect they have not realistically assessed what arbitration would mean for them in terms of cost, time, and likely outcome.",
+   opts:["Let them walk — it is their choice","Before accepting the threat at face value, ask each party privately to articulate what arbitration would realistically mean for them: the time, cost, likely outcome, and what they would do if arbitration went against them — then return to the table to assess whether a negotiated agreement is still better than their alternatives","Discourage arbitration entirely — always tell parties it is too risky","Immediately file the arbitration referral on their behalf to end the delay"],
+   pref:1,expl:"A skilled conciliator helps parties think clearly about their BATNA before allowing escalation. Parties often over-estimate the strength of their alternatives to a negotiated agreement. Helping each party privately think through the real cost, timeline, and uncertainty of arbitration often reveals that a negotiated settlement — even an imperfect one — is the stronger alternative.",
+   ref:"ILO — BATNA Module",sref:"BATNA Coaching"},
+
+  {mod:"Module 5 — ZOPA",skill:"Finding the Zone of Agreement",topic:"Assessing Whether a Deal Is Possible",
+   sit:"You are mediating a wage dispute. Through separate consultations, you have privately learned that the union's minimum acceptable increase is 6% and management's maximum is 8%. Neither party has shared this with the other.",
+   opts:["Keep this information confidential and let the parties discover the ZOPA themselves through continued bargaining","Use your knowledge of the ZOPA (6–8%) to structure a joint session agenda that focuses both parties on the range where agreement is possible — without disclosing either party's private information — using conditional proposals and anchoring techniques","Tell both parties you know their real positions and suggest 7% immediately","Refer the matter to arbitration since you know the parties can agree and they should just get on with it"],
+   pref:1,expl:"A conciliator's confidential knowledge of both parties' real positions is a powerful tool for structuring the process — not for imposing an outcome. Designing the joint session to focus on the 6–8% range using conditional proposals and anchoring can bring parties to agreement without breaching confidentiality. Disclosing private information destroys the trust that makes the conciliation process work.",
+   ref:"ILO — ZOPA & Negotiation Range",sref:"Mediator Technique"},
+
+  {mod:"Module 6 — Communication",skill:"Active Listening Under Pressure",topic:"Managing Communication in a Tense Joint Session",
+   sit:"In a joint conciliation session, one party's representative repeatedly interrupts the other mid-sentence, escalating frustration and preventing substantive discussion. The session is at risk of breaking down.",
+   opts:["Allow the interruptions to continue — both parties need to express themselves","Intervene calmly and clearly: establish a structured turn-taking protocol for the session, acknowledge that emotions are high, and explicitly state that both sides' concerns will be heard in full before any response is required","Ask the interrupter to leave the room temporarily","End the joint session immediately and continue only in separate consultations"],
+   pref:1,expl:"A facilitator's role includes managing the process, not just the content. Establishing clear turn-taking norms is a legitimate and necessary intervention. Acknowledging high emotions while maintaining structure demonstrates both empathy and authority. Removing a party from the room is a last resort; ending the joint session may be necessary eventually but only after process interventions have been attempted.",
+   ref:"ILO — Communication Skills Module",sref:"Facilitation & Process Management"},
+
+  {mod:"Module 7 — Managing Emotions",skill:"Emotional Intelligence in Bargaining",topic:"When a Party Loses Control",
+   sit:"During a joint session, a union representative becomes visibly distressed and begins crying after a management negotiator makes a dismissive comment about workers' conditions. The room falls silent. You must respond within the next 30 seconds.",
+   opts:["Ignore the emotional moment and continue with the agenda — professionalism requires focusing on substance","Call a short recess, ensure the distressed representative has space and support, speak privately with the management negotiator about the impact of their comment, and resume only when both parties are in a state to engage constructively","Ask the distressed representative to leave if they cannot continue professionally","Continue the session — the other party's comment was factually accurate even if blunt"],
+   pref:1,expl:"Emotional moments in conciliation require immediate, empathetic management. A short recess is the most effective tool — it allows the distressed party to recover and creates space for a private word with the party whose comment caused the reaction. Ignoring the moment damages trust in the process and in you as a neutral; continuing mechanically after a breakdown of emotional safety usually produces worse substantive results.",
+   ref:"ILO — Managing Emotions in Negotiation",sref:"Emotional Intelligence"},
+
+  {mod:"Module 8 — Mutual Gains",skill:"Integrative Bargaining",topic:"Generating Options Beyond the Obvious",
+   sit:"Parties are stuck on wages alone. You are facilitating and you know from separate pre-sessions that the union is also concerned about safety conditions and management is struggling with high absenteeism. Neither party has raised these in the joint session.",
+   opts:["Continue focusing only on wages since that is the formal subject of the dispute","Introduce a structured option-generation exercise in the joint session that invites both parties to list all issues that affect worker wellbeing and organisational performance — without committing to any — then examine whether a package addressing wages, safety, and absenteeism might produce better outcomes for both sides","Tell both parties directly what you learned in the separate sessions","Adjourn without further process since wages alone cannot be resolved"],
+   pref:1,expl:"Mutual gains facilitation is about expanding the solution space, not just splitting differences on a single issue. A structured option-generation exercise — sometimes called a 'brainstorm' or 'possibilities round' — allows parties to surface issues without committing to positions, creating the raw material for integrative solutions. Disclosing what was said in private pre-sessions would be a serious breach of process trust.",
+   ref:"ILO — Mutual Gains & Integrative Bargaining",sref:"Option Generation"},
+
+  {mod:"Module 9 — Face-Saving",skill:"Helping the Other Side Say Yes",topic:"Helping a Party Accept Without Losing Face",
+   sit:"After intensive conciliation, both parties have privately indicated they could accept a 7% increase framed as a 'productivity-linked adjustment'. However, the union's chief negotiator says this framing would be seen as a climb-down by members who were told to expect 10%.",
+   opts:["Tell the union negotiator to communicate the result honestly and accept the consequences","Work with both parties to develop a joint communication narrative: the adjustment is 'responsive to evidence on productivity and cost of living' — technically accurate, saving face for the union, and acceptable to management","Reject any reframing as dishonest — the result must be reported precisely as a 7% wage increase","Recommend the union change their negotiating team for future rounds"],
+   pref:1,expl:"Face-saving in conciliation is about helping parties communicate results truthfully but in ways that allow each constituency to understand and accept the outcome. A framing that is factually accurate — emphasising the productivity and cost-of-living basis — is neither misleading nor manipulative. It is a legitimate tool for making agreements durable. Agreements that negotiators cannot sell to their constituents often collapse.",
+   ref:"ILO — Face-Saving & Relationship Management",sref:"Agreement Durability"},
+
+  {mod:"Module 10 — Managing Impasse",skill:"Breaking Deadlock",topic:"Formal Impasse — Next Steps",
+   sit:"After four conciliation sessions, you have reached a point where no further movement is likely. Both parties are exhausted and entrenched. You must formally decide how to close out the conciliation and advise on next steps.",
+   opts:["Close the file with no formal record of the process or outcomes and tell both parties to start again","Issue a formal certificate of non-resolution, document the last positions of each party, and advise both parties clearly on the options now available: arbitration (binding decision), advisory arbitration (recommended outcome), or a cooling-off period before resuming — with information on time frames, costs, and likely outcomes of each","Impose a settlement as the conciliating officer — you have enough information to decide","Tell both parties they have failed and refer them to legal counsel"],
+   pref:1,expl:"Formal impasse in conciliation requires structured closure: a certificate of non-resolution, documentation of final positions, and clear advice on next steps. Parties need informed choices about arbitration, advisory processes, and cooling-off options — including realistic information about time and cost. Imposing a settlement exceeds the conciliator's mandate; a process with no formal closure leaves parties in legal limbo.",
+   ref:"ILO — Managing Impasse & Returning to the Table",sref:"Process Closure"},
+],
+
+D: [
+  {mod:"Module 1 — Conflict Dynamics",skill:"Recognising Conflict Escalation",topic:"Identifying Early Warning Signs",
+   sit:"You are a labour relations officer. Over the past month you have noticed a sharp increase in informal complaints, three formal grievances, and two requests for union consultation. No collective action has been taken yet, but the pattern concerns you.",
+   opts:["Wait for a formal dispute to be filed before taking any action — early intervention may seem presumptuous","Compile the pattern of signals into a brief risk assessment, flag it to your supervisor and the relevant manager, and recommend a proactive joint review of the specific issues generating complaints before they escalate into a formal dispute","Tell affected workers their concerns are noted and will be addressed at the next scheduled meeting","Advise management to issue a communication reminding workers of the grievance procedure"],
+   pref:1,expl:"Labour relations officers are in a unique position to identify conflict before it escalates. Recognising the pattern — increased complaints, multiple grievances, requests for consultation — and flagging it proactively is both more efficient and more effective than waiting for escalation. Early intervention is not presumptuous; it is the core value of a professional labour relations function.",
+   ref:"ILO — Conflict Dynamics & Early Warning",sref:"Proactive Labour Relations"},
+
+  {mod:"Module 2 — Interests & Positions",skill:"Moving from Positions to Interests",topic:"Preparing Both Sides for Interest-Based Discussion",
+   sit:"You are supporting preparation for a collective bargaining session. Management's position is a 3% wage offer. The union's position is 9%. You suspect both sides are defending numbers rather than examining what they actually need from this round of bargaining.",
+   opts:["Brief management to defend the 3% position firmly — any deviation signals weakness","Prepare briefing materials for both sides (separately) that distinguish their stated positions from their underlying interests, and recommend each side enter the bargaining session ready to explain not just what they want but why — then facilitate an early interest-sharing exchange in the opening session","Leave both sides to prepare independently — your role is administrative, not substantive","Suggest splitting the difference at 6% before bargaining even begins"],
+   pref:1,expl:"Labour relations officers play a valuable role in preparing both sides for effective bargaining, not just managing the logistics. Briefing each side on the distinction between positions and interests, and facilitating an early interest exchange, dramatically increases the chance of reaching an agreement that works for both parties. Administrative neutrality that withholds useful knowledge produces worse outcomes.",
+   ref:"ILO — Interests, Needs & Positions Module",sref:"Bargaining Preparation"},
+
+  {mod:"Module 3 — Underlying Needs",skill:"Separating Needs from Demands",topic:"Understanding What Workers Really Want",
+   sit:"Workers in your organisation have submitted a formal demand for a 15% wage increase. After talking informally with several workers and shop stewards, you learn that the primary driver is not wages per se, but the fact that the medical aid deduction increased by 12% this year, dramatically reducing take-home pay.",
+   opts:["Forward the formal 15% demand to management without additional context","Prepare a briefing note for management that explains the demand's real driver — the medical aid cost increase — and recommend management consider whether addressing the medical aid issue directly might resolve the underlying need more efficiently than a wage increase","Advise workers to reduce their wage demand since the real issue is medical aid","Keep the information to yourself — sharing it might be seen as a breach of workers' confidence"],
+   pref:1,expl:"Understanding what workers actually need, rather than just what they demand, is core to effective labour relations work. Sharing this analysis with management (without breaching individual confidences) often produces more efficient solutions — addressing the medical aid issue may be far less costly than a 15% wage increase. This is not betraying workers; it is helping management understand how to meet the real need.",
+   ref:"ILO — Identifying Underlying Needs",sref:"Needs Analysis"},
+
+  {mod:"Module 4 — BATNA",skill:"Preparing Your Best Alternative",topic:"Helping Management Understand the Cost of No Agreement",
+   sit:"Management is resistant to making any concessions in the current bargaining round, arguing the union's demands are unreasonable. You need to help management understand the cost of a breakdown in negotiations.",
+   opts:["Support management's hard-line position — your role is to represent the employer","Prepare a realistic assessment of the organisation's BATNA: what would a strike, work-to-rule, or arbitration actually cost in terms of lost production, legal fees, reputational damage, and industrial relations climate — and compare this to the cost of a negotiated settlement","Tell management the union's BATNA is weak and they should call the union's bluff","Advise management to make no concessions and see what happens"],
+   pref:1,expl:"A labour relations officer serves the organisation's long-term interests, not just its short-term negotiating position. Helping management understand the realistic cost of their BATNA — what a breakdown would actually cost — is a critical input to sound decision-making. This is not capitulating to the union; it is ensuring management makes an informed choice about whether to hold firm or move.",
+   ref:"ILO — BATNA Module",sref:"Cost-Benefit Analysis"},
+
+  {mod:"Module 5 — ZOPA",skill:"Finding the Zone of Agreement",topic:"Assessing the Bargaining Space",
+   sit:"Before a critical bargaining session, you have information suggesting that the union's minimum acceptable increase is around 6% (based on their members' cost-of-living pressures) and management's maximum is around 8% (based on the wage budget). You need to advise on how to approach the session.",
+   opts:["Tell management to open at 8% immediately to close the negotiation quickly","Advise management to open lower than their maximum and use probing questions in the session to estimate whether their working assumption about the union's minimum is correct — adjusting the approach based on what they learn in the room — and targeting the session toward the ZOPA once it is confirmed","Tell both parties you know their real positions and suggest 7% as the obvious solution","Advise management that any information about the union's minimum is irrelevant — stick to the budget maximum"],
+   pref:1,expl:"Knowing a likely ZOPA exists does not mean you should reveal it — it means you can structure the approach to confirm and utilise it. Advising management to open lower than their maximum while probing to validate the ZOPA assumption is disciplined, strategic preparation. Immediately revealing the maximum wastes all negotiating flexibility; declaring both parties' positions violates your role.",
+   ref:"ILO — ZOPA & Negotiation Range",sref:"Strategic Preparation"},
+
+  {mod:"Module 6 — Communication",skill:"Active Listening Under Pressure",topic:"Improving Communication in a Joint Session",
+   sit:"You observe a collective bargaining session where neither side is really listening — each party is preparing their next argument while the other is speaking. The session is unproductive and both sides are becoming more entrenched.",
+   opts:["Do not intervene — let the process run its course","With the agreement of both parties, introduce a brief structured listening exercise: each side must summarise what they heard the other say before responding. This is not a concession — it is a process tool to improve the quality of the conversation. Debrief the exercise with both parties before continuing","Tell the parties they are not listening and that this is why no progress is being made","End the session and recommend both parties bring different representatives next time"],
+   pref:1,expl:"Active listening in collective bargaining can be practically improved through facilitated exercises. A 'listen to summarise before responding' norm slows down reactive argument and often reveals that the sides understand each other less well than they assumed — creating new openings for genuine dialogue. Simply observing and doing nothing fails the labour relations function's potential contribution.",
+   ref:"ILO — Communication Skills Module",sref:"Facilitated Listening"},
+
+  {mod:"Module 7 — Managing Emotions",skill:"Emotional Intelligence in Bargaining",topic:"Preparing Negotiators for Emotional Moments",
+   sit:"You are preparing a management team for a particularly difficult bargaining round where emotions are likely to be high. Several management representatives have a history of becoming defensive and reactive under pressure.",
+   opts:["Advise management to suppress any emotional reactions and maintain a purely business-like demeanour throughout","Run a preparation session that helps management representatives identify their own emotional triggers, practise staying composed under provocation, and develop planned responses to likely emotionally charged moments — including language for acknowledging tension without conceding substance","Tell management representatives who are prone to emotional reactions to stay out of the room","Advise management to match the union's emotional intensity to show they are equally committed"],
+   pref:1,expl:"Preparation for emotional moments in negotiation is as important as preparation for substantive positions. Helping negotiators identify their triggers and plan their responses — rather than simply suppressing emotion or avoiding emotional people — produces more resilient negotiating teams. Emotional intelligence is a skill that can be developed through preparation, not just an inherent trait.",
+   ref:"ILO — Managing Emotions in Negotiation",sref:"Negotiator Preparation"},
+
+  {mod:"Module 8 — Mutual Gains",skill:"Integrative Bargaining",topic:"Exploring Beyond Single-Issue Bargaining",
+   sit:"Wage negotiations are deadlocked. You know from informal conversations that the union's members care deeply about job security and skills development, and that management has recently allocated budget for automation that will affect several job categories. Neither side has raised these issues formally.",
+   opts:["Keep this information confidential and let the parties continue with wage-only bargaining","Recommend to management that they initiate a broader conversation at the bargaining table — disclosing the automation plans and their potential impact, and proposing a joint workforce development fund as part of the settlement — which may allow a lower wage increase in exchange for stronger security and development commitments","Tell the union privately about the automation plans","Stay out of the substantive content — your role is administrative"],
+   pref:1,expl:"Labour relations officers with context knowledge can add significant value by recommending a broader approach to bargaining. Recommending that management disclose automation plans and propose a workforce development fund transforms a deadlocked wage negotiation into an integrative package where both parties gain more than the wage number alone could deliver. Information asymmetry — where one party knows something the other does not — typically produces worse collective agreements.",
+   ref:"ILO — Mutual Gains & Integrative Bargaining",sref:"Holistic Bargaining Design"},
+
+  {mod:"Module 9 — Face-Saving",skill:"Helping the Other Side Say Yes",topic:"Designing an Agreement That Both Sides Can Sell",
+   sit:"A negotiated agreement has been reached at 6.5%. Both sides are privately satisfied with the result, but the union's lead negotiator is worried about how to explain this to members after a 10% opening demand. The risk is that members reject the agreement.",
+   opts:["Advise the union to simply explain that 6.5% is all that was achievable — members will understand","Recommend that both parties jointly develop a member communication strategy: the agreement narrative should emphasise what was achieved (real wage gains, any non-wage improvements, future joint processes) rather than framing it as a retreat from 10%","Tell the union negotiator they negotiated poorly and should have opened at a more realistic figure","Let the union manage their own member communication — the result is what it is"],
+   pref:1,expl:"Durability of collective agreements depends on member ratification. Agreements that negotiators cannot sell to their constituencies often collapse at the ratification stage, wasting the entire process. Labour relations officers who help design effective member communication — without misrepresenting the substance — protect the investment made in reaching the agreement. This is a professional service, not interference.",
+   ref:"ILO — Face-Saving & Relationship Management",sref:"Agreement Communication"},
+
+  {mod:"Module 10 — Managing Impasse",skill:"Breaking Deadlock",topic:"When the Process Stalls",
+   sit:"Collective bargaining has been deadlocked for six weeks. Both parties have stopped engaging constructively and meetings have become brief, hostile, and unproductive. Your organisation's CEO asks what options exist to break the impasse.",
+   opts:["Recommend legal action against the union for failure to bargain in good faith","Present a structured options analysis to the CEO: (a) request a third-party conciliator from the relevant bargaining council or labour authority; (b) propose a cooling-off period with a specific restart date and a revised agenda focused on interests rather than positions; (c) commission a joint fact-finding exercise on the key disputed facts; (d) make a revised final offer with a defined deadline — and assess the strengths and risks of each option in your specific context","Recommend the CEO attend the next session personally to add authority","Advise the CEO to wait — impasse always resolves itself eventually"],
+   pref:1,expl:"Impasse management requires structured options analysis. A third-party conciliator, a cooling-off period, joint fact-finding, and a final offer with a deadline are all legitimate and evidence-based approaches — each with different costs, benefits, and risks depending on context. Presenting a structured analysis to the CEO is exactly what a professional labour relations function should provide. Recommending legal action as a first resort or passive waiting both produce consistently worse outcomes.",
+   ref:"ILO — Managing Impasse & Returning to the Table",sref:"Impasse Strategy"},
+],
+
+E: [
+  {mod:"Module 1 — Conflict Dynamics",skill:"Recognising Conflict Escalation",topic:"Strategic Assessment of a Dispute",
+   sit:"As a chief negotiator or general secretary, you have received reports that tension between management and workers has been building for several months across three different sites. Grievances have been filed at each site but none have been formally resolved. A union-wide meeting is scheduled for next week.",
+   opts:["Wait for the union-wide meeting to assess the full picture before taking any action","Conduct a rapid strategic assessment before the union-wide meeting: map the grievances across sites, identify whether they share a common root cause, assess where each dispute sits on the conflict path, and prepare a clear agenda for the meeting — including formal escalation options and a proposed bargaining strategy","Tell each site steward to resolve their own grievance independently","Publicly announce a strike ballot immediately to signal seriousness"],
+   pref:1,expl:"Senior negotiators and general secretaries must lead with strategic clarity. A rapid diagnostic — mapping grievances, identifying common causes, assessing escalation risk — before the union-wide meeting allows for informed decision-making rather than reactive responses. Public announcements before internal assessment waste the organisation's credibility. Each site managing independently misses the strategic opportunity of a coordinated response.",
+   ref:"ILO — Conflict Dynamics & Strategic Leadership",sref:"Strategic Negotiation Leadership"},
+
+  {mod:"Module 2 — Interests & Positions",skill:"Moving from Positions to Interests",topic:"Leading an Interest-Based Opening",
+   sit:"You are leading your organisation's bargaining team into a new round of collective agreement negotiations. The other side has opened with a very positional statement of their demands. You must decide how your team will respond.",
+   opts:["Respond with an equally firm positional counter-statement to signal strength","Open with a deliberate interest-disclosure approach: acknowledge receipt of the other side's proposals, then systematically explain the interests and constraints driving your own position — inviting the other side to do the same before proposals are formally tabled","Respond with a legal analysis of the other side's demands to demonstrate expertise","Table your own maximum demand list immediately to create room to negotiate"],
+   pref:1,expl:"Senior negotiators who lead interest-disclosure set the tone for the entire negotiation. An opening that explains interests rather than defending positions signals maturity and creates space for the other side to do the same — dramatically increasing the chance of an efficient, durable agreement. Matching the other side's positional approach leads to prolonged adversarial bargaining. A legal counter-statement opens a battlefield rather than a negotiating space.",
+   ref:"ILO — Interests, Needs & Positions Module",sref:"Senior Negotiation Leadership"},
+
+  {mod:"Module 3 — Underlying Needs",skill:"Separating Needs from Demands",topic:"Institutional Mandate vs. Member Needs",
+   sit:"Your institution has taken a formal position on a key bargaining issue — let us say, opposition to performance-based pay. However, in recent member consultations, you have heard that many members are actually ambivalent: they dislike the uncertainty of performance pay but are attracted by the higher earnings potential it offers.",
+   opts:["Maintain the institutional position without further member consultation — the mandate has been given","Return to members with a more nuanced consultation that explores their underlying needs: income security, fairness, earning potential, and autonomy — then bring a revised mandate to the bargaining table that reflects these real needs rather than the surface-level opposition","Abandon the institutional position entirely and accept performance pay","Tell members their concerns are inconsistent with institutional policy and ask them to trust the process"],
+   pref:1,expl:"Senior leaders must navigate the gap between institutional mandates and member needs. A more nuanced consultation that surfaces underlying concerns — income security, fairness, potential — may reveal that a modified form of performance pay (with floors, caps, or joint determination of criteria) could meet both members' real needs and the institution's fairness principles. Mandates should reflect needs, not the reverse.",
+   ref:"ILO — Identifying Underlying Needs",sref:"Mandate Development"},
+
+  {mod:"Module 4 — BATNA",skill:"Preparing Your Best Alternative",topic:"BATNA at Institutional Level",
+   sit:"Your institution is about to enter a critical negotiation where a breakdown could have significant consequences. The executive committee has not formally discussed what would happen if talks fail. You raise the issue at the pre-bargaining executive meeting.",
+   opts:["Skip the BATNA discussion — raising the possibility of failure is demoralising","Lead the executive through a confidential BATNA analysis: what are all realistic alternatives if talks fail (industrial action, arbitration, legal challenge, political lobbying, membership referendum), what would each actually cost, what outcome would each likely produce, and how does each compare to the deal currently being sought — use this to define the organisation's genuine walk-away point","Assume industrial action is always the BATNA and prepare accordingly","Declare publicly that your organisation is prepared for any outcome — including a strike — as a negotiating signal"],
+   pref:1,expl:"BATNA analysis at institutional level requires examining all alternatives — not assuming strike is always the answer. Some alternatives (arbitration, legal challenge, lobbying) may be more powerful in specific contexts. An executive that has genuinely assessed all options makes informed decisions rather than responding to in-session pressure. Public declarations about readiness for a strike are a negotiating tactic, not a substitute for genuine BATNA analysis.",
+   ref:"ILO — BATNA Module",sref:"Strategic BATNA Planning"},
+
+  {mod:"Module 5 — ZOPA",skill:"Finding the Zone of Agreement",topic:"Reading the Room — Is Agreement Possible?",
+   sit:"After three rounds of bargaining, you have gathered significant information about the other side's real constraints. You believe a ZOPA exists but the other side does not yet seem to recognise it. The risk is that they reject a deal that is actually better than their alternatives.",
+   opts:["Make a final offer and walk away — the other side will eventually figure it out","Design a session specifically aimed at helping both sides see the zone of agreement: use a conditional proposal format ('if we could address X, could you consider Y?') to probe the other side's real flexibility, and consider requesting a short caucus to allow them to assess the proposal in private","Reveal your ZOPA analysis directly to the other side to save time","Continue standard positional bargaining — the ZOPA will reveal itself eventually"],
+   pref:1,expl:"Senior negotiators sometimes need to actively help the other side see that an agreement is possible. Conditional proposals — 'if you can do X, we can consider Y' — are a sophisticated technique for probing ZOPA without revealing positions. Requesting a caucus after a conditional proposal gives the other side private space to assess — which is often when movement happens. Revealing your ZOPA analysis directly surrenders the strategic advantage it represents.",
+   ref:"ILO — ZOPA & Negotiation Range",sref:"Advanced ZOPA Technique"},
+
+  {mod:"Module 6 — Communication",skill:"Active Listening Under Pressure",topic:"Leading with Listening",
+   sit:"You are leading your team in a critical bargaining session. A long, detailed statement is made by the other side. Several of your team members immediately want to rebut specific points. You must decide how to manage your team's response.",
+   opts:["Allow the immediate rebuttals — you do not want the other side to think their statement went unchallenged","Signal your team to hold their rebuttals, then take two minutes to demonstrate active listening yourself: summarise the key points you heard, identify any points of potential common ground, ask one clarifying question, and only then open the floor for your team's substantive response","Ask for the statement in writing before responding to anything","Tell the other side their statement was too long and ask them to summarise it"],
+   pref:1,expl:"The way a senior negotiator responds to a long statement models active listening for the entire team. Summarising what you heard — before rebutting — demonstrates respect, often reveals misunderstandings, and frequently identifies points of common ground that immediate rebuttal would have missed. It also controls the room and prevents reactive, uncoordinated responses from your team.",
+   ref:"ILO — Communication Skills Module",sref:"Team Negotiation Leadership"},
+
+  {mod:"Module 7 — Managing Emotions",skill:"Emotional Intelligence in Bargaining",topic:"When a Negotiation Gets Personal",
+   sit:"During a particularly difficult session, the other side's lead negotiator makes what you perceive as a personal attack on your credibility and leadership of your organisation. Your team is watching for your response.",
+   opts:["Respond with a matching personal counter-attack — allow yourself to be human","Pause, take a breath, and respond calmly: note that you will not engage with personal characterisations, state the one substantive point embedded in the attack that deserves a response, and then redirect the session to the agenda — your composure will signal more authority than any rebuttal","Leave the room to show that personal attacks are not acceptable","Defer to a team member to respond — you are too emotionally involved at this point"],
+   pref:1,expl:"How a senior negotiator responds to personal attacks is one of the most closely watched moments in any negotiation. Composure under provocation signals authority, confidence, and control. Responding to the one legitimate substantive point while declining to engage with the personal dimension demonstrates both emotional intelligence and strategic intelligence. Matching personal attacks or leaving the room both surrender the leadership advantage.",
+   ref:"ILO — Managing Emotions in Negotiation",sref:"Senior Emotional Intelligence"},
+
+  {mod:"Module 8 — Mutual Gains",skill:"Integrative Bargaining",topic:"Reframing a Zero-Sum Negotiation",
+   sit:"Both parties have been treating the negotiation as a pure zero-sum contest — every gain for one side is seen as a loss for the other. The result is escalating conflict and no progress. As the senior negotiator, you believe there are real opportunities for mutual gain that neither side has explored.",
+   opts:["Accept the zero-sum framing — that is the nature of collective bargaining","Call a joint recess and propose a structured option-generation session: each party lists all issues of interest to them, regardless of whether they are on the formal agenda — then examine whether combinations of issues create packages where both sides gain more than any single-issue deal would allow","Make all concessions on the contested items to demonstrate good faith","Commission a third party to generate options and present them to both parties"],
+   pref:1,expl:"Zero-sum thinking is a framing problem, not an inherent feature of collective bargaining. Experienced senior negotiators reframe by proposing joint option-generation exercises that expand the issue space. When both parties bring all their concerns to the table — not just their formal positions — solutions that produce mutual gains frequently emerge. Conceding everything to demonstrate good faith is neither strategic nor durable.",
+   ref:"ILO — Mutual Gains & Integrative Bargaining",sref:"Reframing Strategy"},
+
+  {mod:"Module 9 — Face-Saving",skill:"Helping the Other Side Say Yes",topic:"Designing a Graceful Landing",
+   sit:"After long negotiations, you believe an agreement is within reach, but the other side's lead negotiator has publicly committed to a position they would need to move significantly from. Moving now would be seen by their constituency as a capitulation.",
+   opts:["Make a public statement about the other side's need to compromise to apply pressure","Propose a private meeting with the other side's lead negotiator to jointly design a 'landing scenario': a sequenced process (perhaps a joint review, a mediator's proposal, or a cooling-off period) that allows them to move from their public position while presenting the move as a response to process rather than pressure","Tell the other side that their public statements are their problem and they should have been more careful","Wait for the other side's internal political situation to resolve itself"],
+   pref:1,expl:"Sophisticated negotiators understand that face-saving is not a concession — it is a design problem. If the other side's lead negotiator cannot move from a public position without appearing to capitulate, the agreement will not hold even if signed. Designing a process that allows movement to be framed as a response to objective inputs — a mediator's proposal, a joint review — solves this problem elegantly. Public pressure makes it worse.",
+   ref:"ILO — Face-Saving & Relationship Management",sref:"Advanced Face-Saving Design"},
+
+  {mod:"Module 10 — Managing Impasse",skill:"Breaking Deadlock",topic:"Leading Through Breakdown",
+   sit:"Negotiations have broken down completely. Your team is divided on next steps. The wider membership is anxious for resolution. You are under pressure from multiple directions. You must decide how to lead the organisation through this moment.",
+   opts:["Call an emergency general meeting and let the membership decide by vote what to do next — remove the decision from your hands","Provide clear, composed leadership: acknowledge the breakdown publicly without blame, set out the options available (continued bargaining, conciliation, arbitration, industrial action) with honest assessments of each, consult the executive committee, and present a recommended path forward with your reasoning to the membership","Call an immediate strike to demonstrate your resolve","Accept the other side's last offer to end the uncertainty"],
+   pref:1,expl:"Impasse is the moment that most tests senior negotiation leadership. The organisation needs clarity, not emotion. Clear communication, honest options analysis, executive consultation, and a recommended path forward — presented with the reasoning behind it — is the hallmark of effective leadership in a crisis. Delegating the decision entirely to the membership without leadership guidance produces confusion; an immediate strike without analysis may not be the strongest available alternative.",
+   ref:"ILO — Managing Impasse & Leadership",sref:"Crisis Leadership in Negotiation"},
+],
+
+F: [
+  {mod:"Module 1 — Conflict Dynamics",skill:"Recognising Conflict Escalation",topic:"Managing Conflict in a Regulatory Context",
+   sit:"You work in a government ministry or regulatory agency. You are aware of a longstanding labour dispute in an industry under your oversight. Workers have now filed formal complaints to your office about conditions and pay. Management has not responded to the union formally.",
+   opts:["Treat the complaints as administrative matters to be filed and acknowledged formally, taking no further action","Assess the pattern: how long has this dispute been unresolved, what stage is it at on the conflict path, is there a collective bargaining mechanism in place, and is there a legal obligation on management to respond — then take the most appropriate regulatory action, which may include formal notification to management and monitoring of compliance","Wait for a formal strike or industrial action before the ministry becomes involved","Advise the workers to seek legal representation and disengage from any further involvement"],
+   pref:1,expl:"Government and regulatory bodies have both the authority and the responsibility to intervene at appropriate stages of labour disputes. A pattern of unresolved complaints — especially in the presence of a formal dispute resolution mechanism — triggers regulatory oversight obligations. Passive filing is an abdication; waiting for industrial action before intervening allows preventable escalation.",
+   ref:"ILO — Conflict Dynamics & Regulatory Oversight",sref:"Government's Role in Labour Relations"},
+
+  {mod:"Module 2 — Interests & Positions",skill:"Moving from Positions to Interests",topic:"The Role of Government in Facilitating Interest-Based Dialogue",
+   sit:"Two parties in an industry under your oversight are at impasse in collective bargaining. Management is defending a position of no wage increase. The union is insisting on 10%. Your ministry is considering whether and how to intervene.",
+   opts:["Intervene by recommending a specific wage number based on economic data","Offer to facilitate a structured joint workshop, using government-provided economic and labour market data as a shared evidence base, and propose a session format where both parties explain their real constraints rather than defend positions — positioning government as a resource rather than an arbitrator","Tell both parties to resolve the matter themselves — government should not be involved in private sector bargaining","Threaten regulatory consequences if the impasse is not resolved within 30 days"],
+   pref:1,expl:"Government's most constructive role in collective bargaining impasse is often as a provider of shared facts and a facilitator of interest-based dialogue — not as an arbitrator or an issuer of threats. Offering neutral economic data and a process framework positions government as a resource and reduces the adversarial dynamic. Recommending a specific wage number entangles government in the substance; threats without process rarely produce durable agreements.",
+   ref:"ILO — Interests, Needs & Positions Module",sref:"Government Facilitation Role"},
+
+  {mod:"Module 3 — Underlying Needs",skill:"Separating Needs from Demands",topic:"Understanding the Industry's Real Labour Relations Needs",
+   sit:"Your ministry has received calls for legislative reform from both an employers' federation and a trade union confederation — but their proposed reforms are diametrically opposed. You are tasked with developing a policy recommendation.",
+   opts:["Recommend the proposal of whichever side is most aligned with the current government's political priorities","Conduct structured consultations with both parties: ask each not what legislative changes they want, but what outcomes they need from the labour relations system — what problems are they actually trying to solve — then develop a policy recommendation based on these underlying needs rather than the surface proposals","Simply reject both proposals and maintain the status quo","Commission an external legal review and implement whatever it recommends"],
+   pref:1,expl:"Policy-makers who focus on underlying needs — the problems each side is trying to solve — rather than on surface legislative proposals frequently discover that both sides' real needs can be met through the same reform, even if their proposed solutions appeared incompatible. Structured needs-based consultation is the foundation of sound labour policy development.",
+   ref:"ILO — Identifying Underlying Needs",sref:"Policy Development & Labour Consultation"},
+
+  {mod:"Module 4 — BATNA",skill:"Preparing Your Best Alternative",topic:"Government's BATNA in Labour Disputes",
+   sit:"A major labour dispute in a critical sector is threatening economic disruption. Your ministry is under pressure to intervene — but intervention carries its own risks. A senior official asks you to assess the options if the parties do not reach agreement.",
+   opts:["Advise the minister to impose a mandatory settlement — the government has the authority and the public interest must be protected","Conduct a structured assessment of the government's options if negotiations fail: compulsory arbitration (legally complex, may set poor precedent), emergency legislation (politically costly, short-term), facilitated mediation (lower risk, sustainable), or allowing the dispute to resolve itself (higher short-term cost, preserves collective bargaining principles) — and present the options with their respective costs, benefits, and risks to the decision-maker","Advise the minister to publicly criticise both parties to shift blame","Do nothing — government should never intervene in private sector disputes"],
+   pref:1,expl:"Government intervention in major labour disputes requires disciplined options analysis — not reflexive imposition of a settlement. Each option (arbitration, legislation, mediation, non-intervention) carries different costs for the collective bargaining system's long-term health. Structured presentation of options with honest assessment of risks is the professional standard. Compulsory settlements can undermine the collective bargaining framework if applied as a first resort.",
+   ref:"ILO — BATNA Module",sref:"Public Policy & Labour Relations"},
+
+  {mod:"Module 5 — ZOPA",skill:"Finding the Zone of Agreement",topic:"Assessing Whether a Negotiated Settlement Is Possible",
+   sit:"Your ministry is monitoring a major collective bargaining dispute. Based on economic data and intelligence from both sides, you believe a zone of agreement exists — but neither party seems to know it. The dispute is consuming public and media attention disproportionate to the actual gap.",
+   opts:["Publicly announce that the gap between the parties is small and a deal should be easy to reach — applying pressure for a quick resolution","Privately engage both parties separately, share your analysis of the economic data (without revealing either party's confidential positions), and propose a structured joint fact-finding process that might help both parties see the zone of agreement themselves — without government naming the ZOPA explicitly","Call both parties together and tell them exactly what the ZOPA is and where they should settle","Issue a press release explaining the government's assessment of the wage situation to manage public expectations"],
+   pref:1,expl:"A government body with economic intelligence can add enormous value by helping parties see that an agreement is possible — without imposing a settlement or breaching confidentiality. A joint fact-finding process that allows both sides to examine the same economic data frequently reveals that a ZOPA exists, reducing the information asymmetry that sustains many impasses. Public announcements about the size of the gap typically entrench parties rather than move them.",
+   ref:"ILO — ZOPA & Negotiation Range",sref:"Evidence-Based Facilitation"},
+
+  {mod:"Module 6 — Communication",skill:"Active Listening Under Pressure",topic:"Listening to Both Sides Without Taking Sides",
+   sit:"As a government official, you are meeting separately with the union and then with management as part of a fact-finding process. Each side is presenting their account of events and making strong appeals for government support. You must listen in a way that maintains your credibility as a neutral.",
+   opts:["Take detailed notes agreeing with each side's account in the meeting, then reconcile them later","Listen fully without comment or agreement on substance, use reflecting and clarifying statements to confirm your understanding ('So what you are saying is...', 'If I understand correctly...'), and explicitly tell each party that you are gathering perspectives from both sides before drawing any conclusions","Actively challenge each party's account to test its credibility","Take a clear position in each meeting based on what you are hearing to demonstrate decisiveness"],
+   pref:1,expl:"Neutral information-gathering requires active listening without implicit endorsement. Reflecting and clarifying statements demonstrate genuine understanding without committing to a position. Being transparent that you are gathering both perspectives is essential for maintaining credibility with both parties. Challenging accounts aggressively during fact-finding produces defensive, selective information; taking positions destroys neutrality.",
+   ref:"ILO — Communication Skills Module",sref:"Neutral Active Listening"},
+
+  {mod:"Module 7 — Managing Emotions",skill:"Emotional Intelligence in Bargaining",topic:"Managing Pressure from Multiple Directions",
+   sit:"You are under political pressure from one direction (rapid resolution of the dispute for electoral reasons) and professional pressure from another (maintaining the integrity of the collective bargaining process). You are finding the situation personally stressful and beginning to show signs of anxiety in meetings.",
+   opts:["Conceal the stress completely and respond to whichever pressure is strongest at each moment","Acknowledge the competing pressures explicitly — to yourself and to your supervisor — and develop a structured response: distinguish what you can control (the process you recommend) from what you cannot (the timing of resolution), establish clear personal boundaries about what professional advice you will give regardless of political pressure, and request supervision support if needed","Give way to the political pressure — your career depends on it","Give way to the professional pressure — your integrity depends on it"],
+   pref:1,expl:"Government officials in labour disputes often face intense competing pressures. Emotional intelligence in this context means distinguishing what is within your control (the quality of your professional advice) from what is not (political decisions made above your level), maintaining professional standards clearly, and seeking support when needed. Concealing stress and alternating between pressures produces inconsistent, poor-quality decision-making.",
+   ref:"ILO — Managing Emotions in Negotiation",sref:"Professional Resilience"},
+
+  {mod:"Module 8 — Mutual Gains",skill:"Integrative Bargaining",topic:"Facilitating a Broader Settlement",
+   sit:"A wage dispute in the maritime sector has been the focus of negotiations for months. You know from separate briefings that the union is deeply concerned about job security as automation increases, and management is struggling with high operational costs. Neither issue has been raised formally in the wage talks.",
+   opts:["Stay focused on wages — your oversight role does not extend to broader industry policy","Propose a tripartite forum: bring government, the union, and management together to examine the full picture — wages, automation impact, training needs, and cost competitiveness — and explore whether a broader industry compact might address all parties' real needs more effectively than a wage-only settlement","Tell the union and management to resolve the automation issue separately after the wage talks","Commission a government report on automation in the maritime sector and wait for its findings before taking further action"],
+   pref:1,expl:"Governments with oversight of labour relations in strategic sectors can add unique value by facilitating broader, tripartite compacts that address the real industry challenges driving specific disputes. A wage dispute that is actually about automation anxiety and cost pressure cannot be sustainably resolved by wage numbers alone. Tripartite forums — properly structured — produce more durable settlements than bilateral bargaining alone.",
+   ref:"ILO — Mutual Gains & Integrative Bargaining",sref:"Tripartite Facilitation"},
+
+  {mod:"Module 9 — Face-Saving",skill:"Helping the Other Side Say Yes",topic:"Designing Government Communication to Support Agreement",
+   sit:"An agreement has been reached in a high-profile labour dispute. Both parties are satisfied with the substance but worried about public perception. Management fears being seen as having 'given in'; the union fears being seen as having 'sold out'. Both ask for government support in the public communication.",
+   opts:["Decline — public communication is the parties' responsibility and government neutrality prevents any involvement","Work with both parties to develop a factual government statement that contextualises the agreement: noting the economic data behind the settlement, the professionalism of the process, and the shared commitment to stability — without endorsing either party's narrative or misrepresenting the substance","Issue a statement praising management's leadership in reaching agreement","Issue a statement praising the union's strength in winning a fair settlement"],
+   pref:1,expl:"Government communication at the conclusion of a major labour dispute can provide exactly the neutral framing that allows both parties to claim a constructive outcome without losing face with their respective constituencies. A factual, process-focused government statement — which neither endorses nor embarrasses either party — is a legitimate and effective face-saving mechanism. Praising one side exclusively alienates the other and undermines the government's future role as a neutral.",
+   ref:"ILO — Face-Saving & Relationship Management",sref:"Government's Role in Agreement Communication"},
+
+  {mod:"Module 10 — Managing Impasse",skill:"Breaking Deadlock",topic:"When Regulatory Intervention Becomes Necessary",
+   sit:"A labour dispute in a critical public service sector has reached impasse. The public is beginning to be affected. Your ministry's options under the relevant legislation include: conciliation order, fact-finding commission, mandatory arbitration, and emergency back-to-work legislation.",
+   opts:["Immediately invoke emergency back-to-work legislation — public interest must be protected","Apply the principle of least intervention: begin with a formal conciliation order (least intrusive, preserves collective bargaining), moving to fact-finding if conciliation fails, and reserving mandatory arbitration and emergency legislation for genuine last resorts — with each step properly documented and legally defensible","Do nothing — government should not intervene in collective bargaining under any circumstances","Invoke mandatory arbitration immediately — it is the fastest solution"],
+   pref:1,expl:"The principle of least intervention preserves the integrity of the collective bargaining system while still meeting the government's public interest obligations. Emergency legislation and mandatory arbitration are legitimately available as last resorts in critical sectors, but their overuse destroys the credibility of the collective bargaining system. A structured, escalating approach — conciliation first, then fact-finding, then arbitration — is both legally sounder and more sustainable.",
+   ref:"ILO — Managing Impasse & Government Intervention",sref:"Regulatory Impasse Management"},
+],
+
+G: [
+  {mod:"Module 1 — Conflict Dynamics",skill:"Recognising Conflict Escalation",topic:"Managing Conflict Across Borders and Cultures",
+   sit:"You work in an international organisation or multinational employer context. A recurring pattern of unresolved grievances across different national offices is beginning to create tension at the global level. Cultural differences mean conflict manifests differently in each office, and what looks like resignation in one context may signal serious resentment in another.",
+   opts:["Apply a uniform global grievance policy and expect all offices to report conflicts in the same format","Commission a cross-cultural conflict diagnostic: engage staff in each office through culturally appropriate channels (facilitated focus groups, anonymous surveys, trusted local intermediaries) to understand the nature and stage of conflict in each context — then develop an intervention strategy that is globally consistent in its principles but locally adapted in its methods","Ignore cultural differences — labour law is the same standard everywhere","Wait for a formal dispute to be filed in each location before taking any action"],
+   pref:1,expl:"Conflict in multicultural organisations manifests differently across national contexts. Silence may mean acceptance in one culture and resentment in another; formal complaint may be a last resort in one context and a routine tool in another. Effective conflict diagnosis requires culturally adapted methods while maintaining globally consistent principles of fair treatment and due process. A uniform format imposed globally misses the local signals.",
+   ref:"ILO — Conflict Dynamics in International Contexts",sref:"Cross-Cultural Labour Relations"},
+
+  {mod:"Module 2 — Interests & Positions",skill:"Moving from Positions to Interests",topic:"Interest-Based Bargaining Across Legal Systems",
+   sit:"You are negotiating a global employment framework with a multinational employer across multiple jurisdictions. Each side has formal legal positions that reflect the mandatory requirements of different national labour laws. Beneath these legal positions, you suspect there are shared interests in consistency, predictability, and cost efficiency.",
+   opts:["Treat each national legal requirement as a fixed constraint and negotiate within those constraints jurisdiction by jurisdiction","Propose a joint mapping exercise: identify which elements of each side's position are legally mandated (non-negotiable) and which are organisational preferences (negotiable) — then negotiate only within the negotiable space while respecting legal floors — looking for harmonised solutions that serve both sides' interests in consistency and efficiency","Accept the most restrictive national legal standard as the global default for all jurisdictions","Insist on a single global standard regardless of national legal requirements"],
+   pref:1,expl:"International collective bargaining requires distinguishing legally mandated floors from organisational preferences. Mapping what is genuinely non-negotiable versus what is merely preferred allows efficient negotiation in the actual solution space, while producing frameworks that are legally compliant in all jurisdictions. Applying the most restrictive standard universally imposes unnecessary costs; ignoring legal requirements creates liability.",
+   ref:"ILO — Interests, Needs & Positions in International Bargaining",sref:"International Labour Standards"},
+
+  {mod:"Module 3 — Underlying Needs",skill:"Separating Needs from Demands",topic:"Understanding Needs in a Diverse Workforce",
+   sit:"Staff in your international organisation have submitted a collective demand for uniform global pay scales. After informal conversations, you learn that the real concern varies: staff in lower-cost locations feel undervalued relative to their productivity; staff in higher-cost locations are worried about purchasing power; and some are concerned about transparency and fairness in how pay decisions are made.",
+   opts:["Implement uniform global pay scales as demanded — simplicity is a virtue","Conduct a needs-differentiated analysis: identify the distinct underlying needs (relative value, purchasing power, transparency, fairness) and develop a compensation framework that addresses each — perhaps through a combination of purchasing power parity adjustments, transparent pay bands, and a joint pay committee — rather than a single blunt global rate","Reject the demand as impractical in a global context","Commission a benchmarking study and implement whatever it recommends without further consultation"],
+   pref:1,expl:"A single demand (uniform global pay scales) often masks multiple underlying needs that require differentiated solutions. Understanding each group's real concern — value recognition, purchasing power, transparency — allows development of a framework that addresses all of them more effectively than any uniform approach could. Rejecting the demand without analysis misses the opportunity to resolve the underlying concerns.",
+   ref:"ILO — Identifying Underlying Needs",sref:"Global Workforce Needs Analysis"},
+
+  {mod:"Module 4 — BATNA",skill:"Preparing Your Best Alternative",topic:"BATNA in an International Context",
+   sit:"You are negotiating a global framework agreement with a major employer organisation. Talks have stalled. Your colleagues are suggesting you threaten to file a complaint with an international body. Before deciding, you want to ensure you have properly assessed your BATNA.",
+   opts:["File the international complaint immediately — show strength and do not back down","Conduct a realistic BATNA analysis: assess what an international complaint would actually achieve (likely timeline, probable outcome, cost to your relationship), compare it to the value of the current negotiated path, consider other alternatives (engaging a neutral facilitator, proposing a revised framework, withdrawing specific demands in exchange for progress on others) — and select the alternative that genuinely best serves your constituents","Accept the employer's last proposal to preserve the relationship","Immediately terminate all talks and look for a completely different partner organisation"],
+   pref:1,expl:"BATNA analysis is essential before escalating to international mechanisms. These processes are often slow, expensive, and uncertain in outcome. The question is not whether you have a right to file a complaint, but whether doing so is genuinely your best alternative to a negotiated agreement. A realistic assessment may reveal that a modified negotiating approach produces better outcomes sooner. Threats without genuine BATNA analysis are often called — and when they are, you must be prepared to follow through.",
+   ref:"ILO — BATNA in International Negotiations",sref:"International Negotiation Strategy"},
+
+  {mod:"Module 5 — ZOPA",skill:"Finding the Zone of Agreement",topic:"Identifying Agreement Space in a Complex Multilateral Negotiation",
+   sit:"You are part of a multilateral negotiation involving multiple employer organisations, multiple union bodies, and a government representative. Progress is slow because each party's full position set is unknown to the others. You are trying to assess whether a global zone of agreement exists.",
+   opts:["Wait for all parties to formally table their complete positions before attempting any analysis","Propose a structured information-sharing session: each party presents their interests and constraints (not their formal positions) in a plenary — then use a joint subcommittee to identify areas of convergence and draft a zone-of-agreement matrix that maps where all parties' interests overlap, flag areas requiring further negotiation, and separate issues where legal mandates make agreement impossible","Announce publicly what you believe the ZOPA is to accelerate agreement","Break the multilateral process into bilateral pairs and negotiate each pair separately"],
+   pref:1,expl:"In multilateral negotiations, the ZOPA analysis is more complex but even more valuable. A structured information-sharing session followed by a joint subcommittee process — rather than formal positional tabling — allows parties to discover areas of convergence before committing to positions. A zone-of-agreement matrix that maps convergence and divergence across all parties provides a shared reference point for the negotiation.",
+   ref:"ILO — ZOPA in Multilateral Negotiations",sref:"Multilateral Bargaining Strategy"},
+
+  {mod:"Module 6 — Communication",skill:"Active Listening Under Pressure",topic:"Cross-Cultural Listening",
+   sit:"You are in a negotiation session with counterparts from a culture where direct disagreement is considered disrespectful. They appear to agree with everything you say, but you sense that agreement may not be genuine. You need to assess their real position without causing discomfort.",
+   opts:["Accept the apparent agreement at face value and move to implementation","Adapt your communication approach: use indirect questions ('What might be challenging about implementing this in your context?'), hypothetical scenarios ('If there were concerns about this approach, what might they look like?'), and process questions ('What would need to be true for this to work well for your organisation?') — creating safe space for real concerns to emerge without requiring direct disagreement","Tell them directly that they seem to be agreeing without meaning it and ask them to be more direct","Use interpreters from your own culture to mediate the cultural gap"],
+   pref:1,expl:"Active listening across cultural contexts requires adapting technique, not just vocabulary. In cultures where direct disagreement is face-threatening, indirect questions and hypothetical framing create safe channels for real concerns to emerge. The information gathered through adapted listening techniques is more reliable and more complete than apparent agreement obtained through culturally inappropriate directness.",
+   ref:"ILO — Cross-Cultural Communication Module",sref:"Intercultural Active Listening"},
+
+  {mod:"Module 7 — Managing Emotions",skill:"Emotional Intelligence in Bargaining",topic:"Managing Emotions Across Cultural Norms",
+   sit:"In an international bargaining session, one side displays what appears to be strong emotional intensity — raised voices, emphatic gestures, and passionate statements. You are uncertain whether this represents genuine conflict or a culturally appropriate expression of commitment.",
+   opts:["Match the emotional intensity to demonstrate equal commitment","Manage your own internal response first: set aside assumptions about what the emotional intensity means, ask yourself what is actually being said substantively beneath the emotional expression, maintain a calm and interested demeanour, and use a respectful recess to check with a culturally familiar colleague about how to interpret what you are observing","Interpret the emotional display as bad faith and respond formally","Immediately call in a mediator — emotions should not be present in a professional negotiation"],
+   pref:1,expl:"Emotional intelligence in cross-cultural negotiation requires managing your assumptions before managing others' emotions. What reads as confrontational in one cultural context is a signal of seriousness and commitment in another. Checking with a culturally familiar colleague is a legitimate and effective way to calibrate your response. Matching or suppressing emotional expression based on your own cultural norms risks misreading the situation entirely.",
+   ref:"ILO — Managing Emotions Across Cultures",sref:"Cross-Cultural Emotional Intelligence"},
+
+  {mod:"Module 8 — Mutual Gains",skill:"Integrative Bargaining",topic:"Creating Value in an International Framework Agreement",
+   sit:"You are negotiating a global framework agreement that covers wages, working conditions, and freedom of association across 15 countries. Progress has stalled because the parties are treating each issue as a separate single-issue negotiation, producing deadlock on each item.",
+   opts:["Continue issue-by-issue — it is the cleanest way to handle complex multilateral negotiations","Propose a package approach: rather than negotiating each issue to conclusion before moving to the next, table a draft integrated framework that addresses all issues simultaneously — identifying where trade-offs across issues might produce outcomes that are acceptable to all parties even if each single item would not be agreed in isolation","Drop the most contentious issues to make progress on the others","Accept whichever individual items the employer agrees to and build the framework from those"],
+   pref:1,expl:"Package approaches in multilateral negotiation allow trade-offs across issues that single-issue bargaining cannot capture. When parties can give ground on one issue in exchange for progress on another, the total value of the agreement increases for all parties. This is integrative bargaining applied at scale. Sequential single-issue bargaining produces repeated deadlocks because each issue is treated as zero-sum; a package approach makes the overall agreement positive-sum.",
+   ref:"ILO — Mutual Gains in International Negotiations",sref:"Global Framework Agreements"},
+
+  {mod:"Module 9 — Face-Saving",skill:"Helping the Other Side Say Yes",topic:"Face-Saving in an International Context",
+   sit:"A major employer organisation has been publicly committed to a position that they have now, in private, indicated they are willing to move from. They are concerned about losing face with their member companies if they appear to have conceded to union pressure.",
+   opts:["Make a public statement about the employer's new flexibility to lock in the movement","Work with the employer to develop a process-based rationale for the movement: the revised position can be presented as a response to independent expert advice, new economic data, or a joint review process — making the movement appear driven by evidence rather than by pressure","Accept that the employer will not move publicly and drop the demand","Tell the employer that face-saving is not your concern — they made the public commitment"],
+   pref:1,expl:"In international negotiations, face-saving often requires a process-based rationale that allows movement to be attributed to objective inputs rather than to the pressure of the other party. Independent expert advice, economic data, or a joint review process can all provide this cover — allowing the employer to move from a public commitment without appearing to have been forced. This is not manipulation; it is making agreement possible.",
+   ref:"ILO — Face-Saving in International Contexts",sref:"International Agreement Design"},
+
+  {mod:"Module 10 — Managing Impasse",skill:"Breaking Deadlock",topic:"When International Talks Break Down",
+   sit:"A major international collective bargaining process has reached impasse after 18 months of negotiation. Both sides are exhausted, public commitments have been made that make movement difficult, and the relationship between the chief negotiators has deteriorated significantly. You must advise on how to restart.",
+   opts:["Declare the process dead and begin again with completely new parties and a new mandate","Recommend a structured restart process: a cooling-off period of at least 60 days with no public statements; replacement of the chief negotiators on both sides; engagement of an internationally respected neutral to facilitate a needs-based restart session; and agreement on process principles (interests first, positions later; no public commentary during the process) before substantive issues are re-opened","Publicly blame the other side for the impasse to establish your position for any future process","Accept the other side's last position to restart the relationship"],
+   pref:1,expl:"Long-term impasse in international negotiations often requires structural intervention, not just tactical adjustments. A cooling-off period reduces reactive entrenchment; replacing lead negotiators removes personal relationship damage without abandoning institutional commitment; a neutral facilitator provides process legitimacy; agreeing on process principles before re-opening substance prevents a repeat of the pattern that produced impasse. Starting completely over with new mandates typically loses 18 months of substantive progress.",
+   ref:"ILO — Managing Impasse in International Negotiations",sref:"Restarting Stalled Negotiations"},
+]
+
+}; // end TRACKS
+
+// ── PARTICIPANTS ───────────────────────────────────────────────────────────────
+const DATA = [
+// ── GHANA — Volta River Authority ──
+{id:"p01",name:"Lordilia Asiedu Boateng",initials:"LA",title:"Senior Human Resource Officer",dept:"Volta River Authority",country:"Ghana",track:"B",
+ welcome:"Welcome, Lordilia! As Senior HR Officer at VRA, you sit at the interface between management strategy and workforce relations. These 10 scenarios test your decisions on collective bargaining, managing conflict, and designing employment frameworks that serve both VRA's operational needs and its workers.",
+ learnings:["Moving from positional to interest-based bargaining produces more durable agreements — explore what each side actually needs before defending numbers.","BATNA analysis is not about planning for failure: it is about knowing your genuine walk-away point so you can negotiate from informed strength.","Face-saving is a legitimate and valuable tool — agreements that negotiators cannot sell to their constituencies often collapse at the ratification stage."]},
+
+{id:"p02",name:"Miriam Lartekai Darke",initials:"MD",title:"Director Commercial Services & Chair, SJNC",dept:"Volta River Authority",country:"Ghana",track:"E",
+ welcome:"Welcome, Miriam! As Director of Commercial Services and Chairperson of VRA's Standing Joint Negotiating Committee, you lead at the intersection of institutional strategy and collective bargaining. Your 10 scenarios test senior negotiation leadership, managing complex relationships, and designing agreements that endure.",
+ learnings:["Senior negotiators who open with interest disclosure set a more productive tone than those who open with positional statements.","Face-saving for the other party is not weakness — it is the design skill that makes agreements hold.","Strategic impasse management requires honest BATNA analysis, not reactive escalation."]},
+
+{id:"p03",name:"Angela Yasmin Heymann",initials:"AH",title:"Director Legal",dept:"Volta River Authority VRA",country:"Ghana",track:"E",
+ welcome:"Welcome, Angela! As Director Legal at VRA, you bring a legal lens to collective bargaining and labour relations. Your 10 scenarios test how legal expertise can inform — not dominate — negotiation strategy, and how legal frameworks enable rather than replace interest-based dialogue.",
+ learnings:["Legal positions establish floors, not ceilings — negotiation happens in the space above the legal minimum.","Interest-based approaches often produce more enforceable agreements than adversarial legal contests.","The collective bargaining process benefits from legal expertise that supports the process without turning it into litigation."]},
+
+{id:"p04",name:"Kwaku Sarpong Mensah",initials:"KM",title:"Director, Hydro Generation",dept:"Volta River Authority",country:"Ghana",track:"B",
+ welcome:"Welcome, Kwaku! As Director of Hydro Generation at VRA, operational continuity and workforce relations are central to your leadership. Your 10 scenarios test how management directors navigate collective bargaining, manage conflict in operational settings, and balance production requirements with employee interests.",
+ learnings:["Operational managers who understand interest-based bargaining achieve better outcomes than those who treat labour negotiations as a threat to manage.","BATNA analysis helps you know when to hold firm and when a settlement is better than the alternative.","Mutual gains approaches often resolve operational disputes more effectively than positional bargaining."]},
+
+{id:"p05",name:"Paul Otoo Seniagya",initials:"PS",title:"Director Finance",dept:"Volta River Authority",country:"Ghana",track:"B",
+ welcome:"Welcome, Paul! As Director Finance at VRA, you understand the cost side of collective agreements better than most. Your 10 scenarios test how financial leadership contributes to collective bargaining strategy — and how interest-based approaches can produce outcomes that are both financially sound and durable.",
+ learnings:["The real cost of a collective agreement is not just the wage line — it includes the cost of failure to agree, implementation friction, and relationship damage.","Interest-based bargaining often produces financially more efficient outcomes than positional bargaining.","Knowing your BATNA (including the cost of industrial action) is essential input to any financial bargaining strategy."]},
+
+// ── NIGERIA — NIMASA & Federal Ministry ──
+{id:"p06",name:"Adetokunbo Oludaisi Adetuwo",initials:"AA",title:"Assistant Director",dept:"NIMASA / Fed. Ministry of Marine & Blue Economy",country:"Nigeria",track:"F",
+ welcome:"Welcome, Adetokunbo! As Assistant Director at NIMASA, you operate at the intersection of regulatory oversight and labour relations in Nigeria's maritime sector. Your 10 scenarios test how government officials can use conflict diagnosis, interest-based approaches, and structured intervention to support effective collective bargaining.",
+ learnings:["Government officials in labour relations add most value through structured facilitation and early intervention — not imposition.","Interest-based analysis helps develop policy that meets the real needs of both employers and workers.","Knowing when and how to intervene in a dispute requires clear BATNA thinking about the cost of each option."]},
+
+{id:"p07",name:"Muhammad Bukar Lawan",initials:"ML",title:"Senior Marine Engineer",dept:"Federal Ministry of Marine & Blue Economy",country:"Nigeria",track:"F",
+ welcome:"Welcome, Muhammad! As Senior Marine Engineer at the Federal Ministry of Marine and Blue Economy, you bring technical expertise to the labour relations context of Nigeria's maritime sector. Your 10 scenarios test how technical specialists navigate workplace negotiation, grievance processes, and collective bargaining dynamics.",
+ learnings:["Technical expertise is most valuable in collective bargaining when it informs interest analysis rather than substitutes for it.","Early conflict recognition prevents escalation that is far more costly to resolve later.","Government bodies have unique tools to facilitate labour dialogue — structured correctly, these tools preserve the collective bargaining system rather than bypassing it."]},
+
+{id:"p08",name:"Hussaina Hassan Mohammed",initials:"HM",title:"Assistant Chief Labour Officer",dept:"Nigerian Maritime Administration & Safety Agency",country:"Nigeria",track:"D",
+ welcome:"Welcome, Hussaina! As Assistant Chief Labour Officer at NIMASA, you are central to managing the labour relations framework in one of Nigeria's key regulatory agencies. Your 10 scenarios test how labour officers diagnose disputes, prepare bargaining parties, and help reach durable agreements.",
+ learnings:["Labour relations officers who understand needs behind demands facilitate better agreements than those who simply manage the formal process.","Preparing both parties for interest-based dialogue — not just the logistics — is a high-value contribution.","BATNA thinking helps you advise management realistically about the cost of their negotiating choices."]},
+
+{id:"p09",name:"Olajumoke Ajibike Olufadeju",initials:"OO",title:"Personal Assistant to the Director-General",dept:"Nigerian Maritime Administration & Safety Agency",country:"Nigeria",track:"F",
+ welcome:"Welcome, Olajumoke! In your role supporting the Director-General of NIMASA, you have a unique vantage point on institutional leadership and decision-making in high-stakes contexts. Your 10 scenarios explore how conflict awareness, communication skills, and negotiation principles apply across professional settings.",
+ learnings:["Conflict awareness at any level of an organisation enables earlier, more effective intervention.","Active listening is the foundation of effective professional communication in any context.","Understanding interests behind positions improves every kind of institutional interaction, not just formal bargaining."]},
+
+{id:"p10",name:"James Oshoma Omogiafo",initials:"JO",title:"Assistant Director, Maritime Labour Relations",dept:"Nigerian Maritime Administration & Safety Agency",country:"Nigeria",track:"F",
+ welcome:"Welcome, James! As Assistant Director for Maritime Labour Relations at NIMASA, you sit at the centre of labour-management relations in Nigeria's maritime sector. Your 10 scenarios test how maritime labour relations specialists diagnose disputes, facilitate dialogue, and support effective collective bargaining frameworks.",
+ learnings:["Maritime labour relations require both sector-specific knowledge and general negotiation skills — the principles apply even when the context is specialised.","Regulatory bodies that facilitate interest-based dialogue create more sustainable industry labour relations than those that impose settlements.","BATNA analysis helps labour relations officials advise both parties on the realistic cost of their alternatives."]},
+
+{id:"p11",name:"Abidemi Onikoro Falana",initials:"AF",title:"Principal Legal Officer",dept:"Nigerian Maritime Administration & Safety Agency",country:"Nigeria",track:"F",
+ welcome:"Welcome, Abidemi! As Principal Legal Officer at NIMASA, your expertise in legal frameworks shapes the formal architecture of labour relations in Nigeria's maritime sector. Your 10 scenarios test how legal officers contribute to collective bargaining without turning negotiation into litigation — and how law serves as a framework for, not a substitute for, negotiated solutions.",
+ learnings:["Legal frameworks establish the rules of the game — effective negotiators use them as a foundation for interest-based dialogue, not as weapons.","Legal officers add most value in collective bargaining by helping parties understand their rights and obligations, then making space for negotiated solutions within that framework.","The most durable agreements are those the parties designed together, not those imposed by legal process."]},
+
+{id:"p12",name:"Sani Adamu Usaini",initials:"SU",title:"Assistant Chief Marine Officer",dept:"Federal Ministry of Marine & Blue Economy",country:"Nigeria",track:"F",
+ welcome:"Welcome, Sani! As Assistant Chief Marine Officer at the Federal Ministry of Marine and Blue Economy, you bring operational maritime expertise to the institutional context of labour relations. Your 10 scenarios test how technical officers in government navigate workplace conflict, collective bargaining processes, and the ministry's role in the maritime sector's labour relations system.",
+ learnings:["Technical government officers benefit from understanding the conflict path — escalation is more costly to reverse than to prevent.","Interest-based approaches work in technical and operational contexts, not just in formal bargaining rooms.","Government's most effective role in labour disputes is usually facilitation and early intervention, not imposition."]},
+
+// ── SOUTH AFRICA — PHSDSBC ──
+{id:"p13",name:"Linah Jiyane",initials:"LJ",title:"2nd Deputy President",dept:"PHSDSBC",country:"South Africa",track:"C",
+ welcome:"Welcome, Linah! As 2nd Deputy President of the PHSDSBC, you hold senior leadership in one of South Africa's most complex sectoral bargaining councils — covering health and social development. Your 10 scenarios test strategic leadership in collective bargaining facilitation, dispute resolution, and institutional governance of the bargaining process.",
+ learnings:["Bargaining council leaders set the tone for the process — their approach to conflict and dialogue shapes what is possible.","Face-saving mechanisms are essential tools for council leadership: agreements that neither party can sell to their constituency do not hold.","Strategic impasse management requires institutional authority and disciplined process design, not just goodwill."]},
+
+{id:"p14",name:"Sifiso Zakhele Jonas Khumalo",initials:"SK",title:"Deputy Director: Collective Bargaining",dept:"PHSDSBC",country:"South Africa",track:"C",
+ welcome:"Welcome, Sifiso! As Deputy Director for Collective Bargaining at the PHSDSBC, you manage the operational heart of the collective bargaining process in the public health and social development sector. Your 10 scenarios test how collective bargaining managers design and facilitate effective processes, from conflict diagnosis to agreement closure.",
+ learnings:["Effective collective bargaining management requires understanding both the substance of disputes and the process dynamics that allow resolution.","Identifying the zone of agreement — even when parties cannot — is a key skill for bargaining council professionals.","Mutual gains facilitation techniques produce more durable agreements than positional splitting."]},
+
+{id:"p15",name:"Masedi Lonkokile",initials:"ML",title:"National Negotiator",dept:"PHSDSBC",country:"South Africa",track:"C",
+ welcome:"Welcome, Masedi! As National Negotiator at the PHSDSBC, you are a specialist in the practice of collective bargaining facilitation across the public health sector. Your 10 scenarios test the full range of negotiation facilitation skills — from conflict diagnosis to interest mapping, ZOPA estimation, and impasse management.",
+ learnings:["National negotiators add value by helping both sides see the agreement that is possible, not by imposing outcomes.","Interest mapping — understanding both parties' real needs — is the most powerful tool in the facilitator's kit.","Impasse is rarely permanent: structured process interventions almost always create new opening for dialogue."]},
+
+{id:"p16",name:"Bongani Lose Lose",initials:"BL",title:"Director",dept:"Department of Health",country:"South Africa",track:"E",
+ welcome:"Welcome, Bongani! As Director at the Eastern Cape Department of Health, you carry both managerial and employer responsibilities in a sector with highly organised labour. Your 10 scenarios test senior leadership in collective bargaining — how directors engage with the process, manage complex relationships, and make strategic decisions that serve both the department and its workforce.",
+ learnings:["Senior managers who engage seriously with collective bargaining — rather than delegating it entirely — produce better outcomes for their departments.","Interest-based approaches produce more durable agreements than adversarial strategies in the public sector context.","Knowing your BATNA as an employer — including the cost of industrial action in health service delivery — is essential preparation."]},
+
+{id:"p17",name:"Ramotsoge Charles Mabula",initials:"RM",title:"Deputy Director: Employment Relations & Labour",dept:"PHSDSBC",country:"South Africa",track:"C",
+ welcome:"Welcome, Ramotsoge! As Deputy Director for Employment Relations and Labour at the PHSDSBC, you manage the employment relations framework across the public health and social development bargaining unit. Your 10 scenarios test how employment relations specialists use conflict diagnosis, interest analysis, and skilled facilitation to support effective collective bargaining.",
+ learnings:["Employment relations specialists who understand needs behind positions design better processes and get better results.","ZOPA awareness — knowing whether an agreement zone exists before entering a session — is a critical preparation skill.","Communication quality in joint sessions is as important as the substance of the proposals on the table."]},
+
+{id:"p18",name:"Mashego Solomon Mahlatjie",initials:"MM",title:"Director: Labour Relations & Employer Chief Negotiator",dept:"PHSDSBC",country:"South Africa",track:"E",
+ welcome:"Welcome, Mashego! As Director of Labour Relations and Employer Chief Negotiator at the PHSDSBC, you occupy one of the most demanding roles in South African public sector collective bargaining. Your 10 scenarios test the full range of senior negotiation leadership — from strategic preparation to managing impasse and designing durable agreements.",
+ learnings:["Chief negotiators set the tone for the entire bargaining relationship — interest-based leadership from the top changes what is possible.","Emotional intelligence under pressure is a learnable skill, not a fixed trait — preparation for difficult moments matters.","Durable agreements require both good substance and effective communication design so all constituencies can accept the outcome."]},
+
+{id:"p19",name:"Thabiso Kenneth Malemela",initials:"TM",title:"Manager: Labour Relations",dept:"Department of Health, Mpumalanga",country:"South Africa",track:"D",
+ welcome:"Welcome, Thabiso! As Manager of Labour Relations for the Mpumalanga Department of Health, you manage the day-to-day labour relations function in a large, complex public health system. Your 10 scenarios test how labour relations managers navigate collective bargaining, dispute prevention, and the design of effective employment relations systems.",
+ learnings:["Labour relations managers who invest in conflict prevention — early identification and structured response — produce better long-term outcomes than those focused only on dispute resolution.","Preparing management teams for interest-based bargaining improves their results significantly.","Understanding the cost of your BATNA helps management make rational, evidence-based decisions in bargaining."]},
+
+{id:"p20",name:"Nkhensani Didah Maluleke",initials:"NM",title:"Shop Steward — Social Work",dept:"Public Servants Association",country:"South Africa",track:"A",
+ welcome:"Welcome, Nkhensani! As a shop steward for social workers in the Public Servants Association, you are the frontline representative for some of the most essential workers in South Africa's public sector. Your 10 scenarios test how shop stewards navigate grievances, collective bargaining, and the full range of negotiation challenges on behalf of their members.",
+ learnings:["Shop stewards who understand interests behind positions negotiate better outcomes than those who simply repeat demands.","Knowing your real BATNA — not assuming it is always a strike — makes you a stronger representative for your members.","Mutual gains approaches often deliver more to members than single-issue wage bargaining alone."]},
+
+{id:"p21",name:"Masapa Macdonald Mangoedi",initials:"MM",title:"Manager: Collective Bargaining",dept:"PHSDSBC",country:"South Africa",track:"C",
+ welcome:"Welcome, Masapa! As Manager of Collective Bargaining at the PHSDSBC, you are responsible for the operational delivery of the collective bargaining process in the public health sector. Your 10 scenarios test how collective bargaining managers build effective processes, facilitate productive sessions, and help parties reach durable agreements.",
+ learnings:["Process design is as important as substance in collective bargaining — well-designed processes produce better outcomes than poorly designed ones with better intentions.","Option generation techniques — helping parties see possibilities beyond their stated positions — is a core facilitation skill.","Formal impasse closure (certificate of non-resolution, clear next steps) protects the process and the parties."]},
+
+{id:"p22",name:"David Paseka Maqina",initials:"DM",title:"Director",dept:"Free State Department of Health",country:"South Africa",track:"E",
+ welcome:"Welcome, David! As Director at the Free State Department of Health, you carry senior leadership responsibility in a sector defined by complex labour relations. Your 10 scenarios test how health sector directors approach collective bargaining, manage institutional relationships with unions, and make strategic decisions under pressure.",
+ learnings:["Directors who understand the negotiation process — not just the outcome they want — contribute more effectively to their organisation's bargaining strategy.","Interest-based approaches work in the public health sector: workers' real needs and the department's real constraints are often more compatible than positional bargaining suggests.","Strategic impasse management requires options analysis and leadership composure, not just legal knowledge."]},
+
+{id:"p23",name:"Ramadimetja Patience Mokoka",initials:"RP",title:"Deputy Director: Labour Relations",dept:"Department of Social Development",country:"South Africa",track:"D",
+ welcome:"Welcome, Patience! As Deputy Director of Labour Relations at the Department of Social Development, you manage labour relations in a sector serving South Africa's most vulnerable citizens. Your 10 scenarios test how deputy directors navigate collective bargaining, dispute prevention, and the design of labour relations systems that serve both the department and its workforce.",
+ learnings:["Labour relations officers who diagnose conflict early prevent the costly escalation that reactive management cannot avoid.","Preparing both parties for interest-based dialogue — not just managing the formal process — is high-value professional work.","Agreement communication design is part of the labour relations function: agreements that neither party can sell do not hold."]},
+
+{id:"p24",name:"Madelain Müller",initials:"MM",title:"Chief Financial Officer",dept:"Public Servants Association",country:"South Africa",track:"E",
+ welcome:"Welcome, Madelain! As CFO of the Public Servants Association, you bring financial discipline and institutional leadership to one of South Africa's major public sector unions. Your 10 scenarios test how financial and institutional leaders support the union's collective bargaining strategy — and how financial analysis informs, rather than constrains, effective negotiation.",
+ learnings:["Financial analysis of the true cost of agreements — and the cost of failure to agree — is essential input to bargaining strategy.","Senior institutional leaders who engage with bargaining strategy, not just outcomes, make more effective contributions.","Interest-based approaches in the union context mean understanding members' real needs, not just their stated demands."]},
+
+{id:"p25",name:"Boitumelo Patience Phaedi",initials:"BP",title:"Acting Deputy Director: Employee Relations",dept:"PHSDSBC",country:"South Africa",track:"C",
+ welcome:"Welcome, Boitumelo! As Acting Deputy Director for Employee Relations at the PHSDSBC, you are managing complex employee relations processes in the public health bargaining council. Your 10 scenarios test how employee relations specialists facilitate dialogue, manage impasse, and design processes that produce workable agreements.",
+ learnings:["Employee relations specialists who understand both the process and the substance of bargaining add more value than those focused only on one.","Helping parties discover the zone of agreement is more effective than announcing what it is.","Face-saving mechanisms in joint communications protect agreement durability — design them into the process from the start."]},
+
+{id:"p26",name:"Ntata Josias Sekgota",initials:"NS",title:"Chief Negotiator — NUPSAW",dept:"PHSDSBC",country:"South Africa",track:"E",
+ welcome:"Welcome, Ntata! As Chief Negotiator for NUPSAW in the PHSDSBC, you lead your union's negotiating team in one of South Africa's most complex public sector bargaining environments. Your 10 scenarios test senior union negotiation leadership — from strategic preparation and BATNA analysis to managing impasse and designing durable agreements.",
+ learnings:["Chief negotiators who lead with interest disclosure create more productive bargaining dynamics than those who open with maximum positional demands.","Strategic BATNA analysis at institutional level — examining all alternatives, not just strike — makes for stronger, more informed negotiating positions.","Designing graceful landings for the other side is a skill that experienced chief negotiators use to close otherwise impossible deals."]},
+
+{id:"p27",name:"Mpumelelo Selby Sibiya",initials:"MS",title:"General Secretary",dept:"PHSDSBC",country:"South Africa",track:"E",
+ welcome:"Welcome, Mpumelelo! As General Secretary of the PHSDSBC, you provide institutional leadership to one of South Africa's largest public sector bargaining councils. Your 10 scenarios test how general secretaries lead collective bargaining institutions through conflict, impasse, and complex multi-party negotiations.",
+ learnings:["General secretaries set the institutional culture for collective bargaining — their leadership of process shapes what is possible.","Strategic impasse management is a leadership competency: clear options analysis and composed communication under pressure are essential.","Mutual gains facilitation at institutional level transforms zero-sum dynamics into shared problem-solving."]},
+
+{id:"p28",name:"Siphamandla Cedric Sihlangu",initials:"SS",title:"General Secretary",dept:"SAMATU",country:"South Africa",track:"E",
+ welcome:"Welcome, Siphamandla! As General Secretary of SAMATU, you lead your union's institutional strategy and bargaining programme. Your 10 scenarios test senior union leadership in collective bargaining — from building effective bargaining teams to managing difficult negotiations and communicating outcomes to members.",
+ learnings:["General secretaries who invest in their negotiating team's skills — including emotional intelligence — build more effective bargaining capacity.","Interest-based leadership from the top of a union changes what the bargaining team can achieve at the table.","Member communication is part of the bargaining strategy — outcomes that members cannot accept are not durable outcomes."]},
+
+{id:"p29",name:"Thibogang Talbot Thole",initials:"TT",title:"Chief Negotiator — DENOSA",dept:"PHSDSBC",country:"South Africa",track:"E",
+ welcome:"Welcome, Thibogang! As Chief Negotiator for DENOSA in the PHSDSBC, you represent one of South Africa's largest nursing unions in public sector collective bargaining. Your 10 scenarios test senior union negotiation leadership, including managing complex multi-party bargaining, designing durable agreements, and leading your team through the most challenging moments.",
+ learnings:["Chief negotiators for nurses face unique pressures — operational continuity, public interest, and member welfare all intersect at the bargaining table.","Interest-based approaches that address nurses' real needs (not just wages) produce more comprehensive and durable agreements.","BATNA analysis for a nursing union requires careful consideration of the public service obligations that constrain industrial action options."]},
+
+// ── UZBEKISTAN ──
+{id:"p30",name:"Madinabonu Abdukarimova",initials:"MA",title:"Officer",dept:"Federation of Trade Unions of Uzbekistan",country:"Uzbekistan",track:"A",
+ welcome:"Welcome, Madinabonu! As an officer of the Federation of Trade Unions of Uzbekistan, you are part of building an effective collective bargaining culture in a rapidly evolving labour relations context. Your 10 scenarios test how trade union officers apply interest-based negotiation principles in a range of collective bargaining situations.",
+ learnings:["Interest-based bargaining principles are universal — they apply in all economic and cultural contexts, including rapidly developing ones.","Trade union officers who understand the full conflict path — and intervene early — represent their members more effectively.","BATNA awareness helps union officers know when to persist and when to settle, based on what genuinely serves their members."]},
+
+{id:"p31",name:"Eka Margishvili",initials:"EM",title:"Executive Director",dept:"Confederation of Employers of Uzbekistan",country:"Uzbekistan",track:"B",
+ welcome:"Welcome, Eka! As Executive Director of the Confederation of Employers of Uzbekistan, you shape employer-side collective bargaining policy at national level. Your 10 scenarios test how employer organisation leaders navigate complex bargaining environments, build effective employer negotiating capacity, and design frameworks that serve member companies.",
+ learnings:["Employer confederations that promote interest-based bargaining among member companies build more stable labour relations environments.","National-level employer leaders set the tone for bargaining culture across an entire sector or economy.","Understanding the mutual gains potential in collective bargaining helps employer organisations advocate for more productive approaches to labour-management relations."]},
+
+{id:"p32",name:"Amirbek Narzullaev",initials:"AN",title:"Officer",dept:"Federation of Trade Unions of Uzbekistan",country:"Uzbekistan",track:"A",
+ welcome:"Welcome, Amirbek! As an officer of the Federation of Trade Unions of Uzbekistan, you are working to strengthen collective bargaining in Uzbekistan's evolving labour relations system. Your 10 scenarios test how trade union officers apply the principles of effective collective bargaining — from conflict diagnosis to BATNA analysis and mutual gains approaches.",
+ learnings:["Strong collective bargaining systems are built through consistent application of good-faith principles — interest-based approaches are the foundation.","Union officers who develop BATNA thinking build more strategic bargaining programmes for their federations.","Mutual gains negotiation creates the kind of durable agreements that strengthen the collective bargaining system over time."]},
+
+// ── INDONESIA ──
+{id:"p33",name:"Abyan Pras Sahala",initials:"AS",title:"Human Capital Business Transformation Specialist",dept:"APINDO",country:"Indonesia",track:"B",
+ welcome:"Welcome, Abyan! As a Human Capital Business Transformation Specialist at APINDO (the Indonesian Employers' Association), you bring a strategic HR lens to collective bargaining. Your 10 scenarios test how employer representatives balance operational transformation needs with effective labour relations, using interest-based approaches and mutual gains strategies.",
+ learnings:["Business transformation and collective bargaining are not inherently in conflict — interest-based approaches can align transformation objectives with workers' real needs.","BATNA analysis in transformation contexts must include the full cost of workforce resistance, not just the cost of the agreement.","Mutual gains bargaining creates the kind of joint ownership of agreements that makes implementation smoother."]},
+
+// ── INTERNATIONAL ORGANISATIONS ──
+{id:"p34",name:"Julia Harter",initials:"JH",title:"Lawyer",dept:"European Patent Office",country:"International Organisation",track:"G",
+ welcome:"Welcome, Julia! As a Lawyer at the European Patent Office, you operate in one of the most sophisticated international employment relations environments — where staff representation, collective bargaining, and international legal frameworks intersect. Your 10 scenarios test how legal expertise contributes to effective collective bargaining in complex international contexts.",
+ learnings:["Legal expertise in collective bargaining is most valuable when it enables interest-based solutions rather than adversarial legal contests.","International employment contexts require sensitivity to cultural differences in how conflict manifests and how agreement is signalled.","The most durable agreements in international organisations are those designed collaboratively — not those imposed through legal process."]},
+
+{id:"p35",name:"Matt Ray Allan Sevenants",initials:"MS",title:"HR Partner",dept:"European Free Trade Association (EFTA)",country:"International Organisation",track:"G",
+ welcome:"Welcome, Matt! As HR Partner at EFTA, you manage employment relations across an international organisation with staff from many different national and cultural backgrounds. Your 10 scenarios test how international HR professionals apply collective bargaining principles in multicultural contexts, managing both the substance and the cultural dynamics of workplace negotiation.",
+ learnings:["Interest-based approaches work across cultural contexts — the principles are universal even when the methods must be adapted.","Cross-cultural active listening requires adapting technique, not just vocabulary — understanding what agreement and disagreement look like in different cultural contexts.","International HR professionals who understand collective bargaining as a system — not just a process — build more effective labour relations frameworks."]},
+
+// ── MALAYSIA ──
+{id:"p36",name:"Amran Bin Che Rose",initials:"AR",title:"Senior Consultant, Legal & Industrial Relations",dept:"Malaysian Employers Federation",country:"Malaysia",track:"B",
+ welcome:"Welcome, Amran! As Senior Consultant for Legal and Industrial Relations at the Malaysian Employers Federation, you advise member companies on collective bargaining and labour law across Malaysia's diverse industrial landscape. Your 10 scenarios test how employer-side legal and IR specialists use interest-based principles to improve collective bargaining outcomes for their clients.",
+ learnings:["Legal and industrial relations consultants who understand interest-based bargaining provide more value to their clients than those who focus only on legal positions.","BATNA analysis is a core advisory service — helping clients understand the real cost of their alternatives is essential professional advice.","Package deals and mutual gains approaches often produce financially better outcomes for employers than positional bargaining."]},
+
+// ── PHILIPPINES ──
+{id:"p37",name:"Elizabeth Gomez",initials:"EG",title:"Union Representative",dept:"Mitsumi Philippines Workers Union ALU — TUCP",country:"Philippines",track:"A",
+ welcome:"Welcome, Elizabeth! As a union representative of the Mitsumi Philippines Workers Union affiliated with TUCP, you represent workers in a manufacturing context where collective bargaining is both a right and a practical tool for improving working conditions. Your 10 scenarios test the full range of union representative skills — from grievance management to BATNA analysis and mutual gains bargaining.",
+ learnings:["Union representatives who understand the full collective bargaining process — including interests, BATNA, and ZOPA — represent their members more effectively.","Mutual gains approaches often deliver more to manufacturing workers than single-issue wage bargaining.","Knowing when and how to escalate — and when a negotiated settlement is better than industrial action — is the core skill of effective union representation."]},
+
+// ── SOUTH AFRICA — PSCBC ──
+{id:"p38",name:"Refitlhile Dominic Baloyi",initials:"RB",title:"Shop Steward",dept:"PSCBC",country:"South Africa",track:"A",
+ welcome:"Welcome, Refitlhile! As a shop steward in the PSCBC, you are on the frontline of collective bargaining in South Africa's public service. Your 10 scenarios test how shop stewards navigate the full range of workplace negotiation challenges — from conflict diagnosis to mutual gains bargaining and impasse management.",
+ learnings:["Shop stewards who understand interest-based bargaining achieve more for their members than those who simply repeat positional demands.","BATNA awareness is essential — knowing your real walk-away alternative prevents both unnecessary capitulation and unnecessary escalation.","Active listening is a practical skill that shop stewards can use immediately to improve outcomes in every negotiation."]},
+
+{id:"p39",name:"Frederik Johannes de Bruin",initials:"FD",title:"General Secretary",dept:"PSCBC",country:"South Africa",track:"E",
+ welcome:"Welcome, Frederik! As General Secretary of the PSCBC, you lead one of South Africa's most important public sector bargaining councils. Your 10 scenarios test how general secretaries provide strategic leadership in collective bargaining — setting institutional culture, managing complex multi-party processes, and leading through impasse.",
+ learnings:["General secretaries of bargaining councils shape the culture and quality of collective bargaining across their entire sector.","Strategic impasse management — structured options analysis, neutral facilitation, composed leadership communication — is a defining competency for council leadership.","Mutual gains facilitation at council level transforms adversarial bargaining dynamics into shared problem-solving."]},
+
+{id:"p40",name:"Mompati Jones Galorale",initials:"MG",title:"Chief Negotiator",dept:"PSCBC",country:"South Africa",track:"E",
+ welcome:"Welcome, Mompati! As Chief Negotiator at the PSCBC, you lead complex bargaining processes in South Africa's public service. Your 10 scenarios test the full range of senior negotiation leadership skills — from strategic preparation and BATNA analysis to managing multi-party dynamics and designing durable agreements.",
+ learnings:["Chief negotiators who understand the ZOPA — and help both sides see it — close more deals than those who wait for it to emerge.","Interest-based leadership from the chief negotiator sets the bargaining climate for the entire process.","Designing effective face-saving mechanisms for both parties is an advanced negotiation skill that produces agreements that actually hold."]},
+
+{id:"p41",name:"Modise Lesley Letsatsi",initials:"ML",title:"Labour Relations Officer",dept:"Public Servants Association",country:"South Africa",track:"D",
+ welcome:"Welcome, Modise! As a Labour Relations Officer at the PSA, you support members and manage labour relations processes across the public service. Your 10 scenarios test how labour relations officers diagnose conflict, prepare bargaining parties, and help produce durable agreements through effective process management.",
+ learnings:["Labour relations officers who diagnose conflict early save their organisations the far higher cost of managing escalated disputes.","Preparing both sides for interest-based dialogue is a high-value contribution that labour relations officers are uniquely positioned to make.","BATNA thinking is not just for negotiators — it is essential context for any professional labour relations advice."]},
+
+{id:"p42",name:"Rueben Mpono Maleka",initials:"RM",title:"Shop Steward",dept:"PSCBC",country:"South Africa",track:"A",
+ welcome:"Welcome, Rueben! As a shop steward in the PSCBC, you represent public service workers in collective bargaining. Your 10 scenarios test how shop stewards apply effective negotiation principles — from reading the conflict path to managing impasse — in the service of their members.",
+ learnings:["Shop stewards who develop interest-based skills become more effective advocates for their members in every bargaining context.","Understanding the ZOPA — even roughly — helps you advise members on what kind of outcome is realistic before and during bargaining.","Mutual gains approaches can produce better outcomes for your members than adversarial single-issue bargaining."]},
+
+{id:"p43",name:"Tinyiko Percy Mashele",initials:"TM",title:"Senior Officer",dept:"GPSSBC",country:"South Africa",track:"C",
+ welcome:"Welcome, Tinyiko! As Senior Officer at the GPSSBC (Gauteng Provincial and Local Government Sector Bargaining Council), you support the collective bargaining process in one of South Africa's most complex provincial bargaining environments. Your 10 scenarios test how senior council officers facilitate dialogue, manage impasse, and help parties reach workable agreements.",
+ learnings:["Senior council officers who understand both the process and the substance of collective bargaining facilitate better outcomes.","ZOPA awareness — knowing whether agreement is possible before a session — allows better process planning and more effective facilitation.","Face-saving mechanisms designed into the agreement process make ratification more likely and implementation smoother."]},
+
+{id:"p44",name:"Joseph Matlhogonolo Mashigo",initials:"JM",title:"Shop Steward",dept:"Public Servants Association",country:"South Africa",track:"A",
+ welcome:"Welcome, Joseph! As a shop steward at the PSA, you represent public servants in collective bargaining and grievance processes. Your 10 scenarios test how shop stewards apply effective negotiation principles in the demanding context of South Africa's public service bargaining.",
+ learnings:["Effective shop stewards understand that their job is to represent members' real needs — not just their stated demands.","BATNA analysis gives shop stewards a principled basis for deciding when to escalate and when to settle.","Mutual gains approaches to bargaining often produce better outcomes for PSA members than purely adversarial strategies."]},
+
+{id:"p45",name:"Lorvica Eylon Matthews",initials:"LM",title:"Shop Steward",dept:"PSCBC",country:"South Africa",track:"A",
+ welcome:"Welcome, Lorvica! As a shop steward in the PSCBC, you are a direct link between public service workers and the collective bargaining process. Your 10 scenarios test how shop stewards develop and apply the skills needed to represent members effectively — from reading conflict to closing durable agreements.",
+ learnings:["Shop stewards who understand the full negotiation process — not just the formal grievance procedure — represent their members far more effectively.","Active listening transforms confrontational workplace interactions into productive problem-solving conversations.","Understanding face-saving helps you design member communications that allow agreements to be ratified rather than rejected."]},
+
+{id:"p46",name:"Handsome Wandile Mgobhozi",initials:"HM",title:"Senior Manager",dept:"PSCBC",country:"South Africa",track:"C",
+ welcome:"Welcome, Wandile! As Senior Manager at the PSCBC, you manage complex operational and process functions in South Africa's public service bargaining council. Your 10 scenarios test how senior managers in bargaining councils facilitate effective processes, manage impasse, and support the institutional quality of collective bargaining.",
+ learnings:["Senior managers in bargaining councils shape the quality of the process as much as the quality of the outcomes.","Mutual gains facilitation — option generation, interest mapping — is a practical skill that senior council managers can deploy directly.","Impasse management is a core operational competency for bargaining council managers: structured, documented, legally sound closure of failed processes."]},
+
+{id:"p47",name:"Thokozile Elizabeth Mkhonto",initials:"TM",title:"Labour Relations Officer",dept:"PSCBC",country:"South Africa",track:"D",
+ welcome:"Welcome, Thokozile! As a Labour Relations Officer at the PSCBC, you support the labour relations processes of South Africa's public service bargaining council. Your 10 scenarios test how labour relations officers contribute to effective collective bargaining — from conflict diagnosis and preparation through to agreement communication.",
+ learnings:["Labour relations officers who understand interests behind demands facilitate more effective bargaining processes.","Preparing negotiators for emotional moments — not just substantive preparation — significantly improves bargaining outcomes.","The cost of no agreement is a critical input to any labour relations advice: BATNA thinking should inform every recommendation."]},
+
+{id:"p48",name:"Mkhululi Mntuyedwa",initials:"MM",title:"Labour Relations Officer",dept:"PSCBC",country:"South Africa",track:"D",
+ welcome:"Welcome, Mkhululi! As a Labour Relations Officer at the PSCBC, you are part of the team that makes collective bargaining work in the public service sector. Your 10 scenarios test the practical skills of labour relations work — from early conflict recognition to facilitating interest-based dialogue and managing the communication of outcomes.",
+ learnings:["Early conflict recognition and structured intervention prevent the costly escalation that reactive labour relations management cannot avoid.","Interest-based preparation for both parties improves the quality of bargaining sessions significantly.","Active listening facilitation — structured turn-taking, summarising before responding — is a practical tool any labour relations officer can introduce immediately."]},
+
+{id:"p49",name:"Ananias Rankgere Mokebe",initials:"AM",title:"Labour Relations Officer",dept:"PSCBC",country:"South Africa",track:"D",
+ welcome:"Welcome, Ananias! As a Labour Relations Officer at the PSCBC, you support collective bargaining and dispute resolution in the public service sector. Your 10 scenarios test how labour relations officers apply the principles of effective collective bargaining — from diagnosing conflict to advising on BATNA and facilitating mutual gains approaches.",
+ learnings:["Labour relations officers who understand the full negotiation framework — interests, BATNA, ZOPA, mutual gains — provide better professional services.","Helping management understand the realistic cost of their BATNA is one of the most valuable advisory services a labour relations officer can provide.","Impasse options analysis — structured presentation of alternatives — is a practical tool for breaking deadlock."]},
+
+{id:"p50",name:"Maipato Annacleta Morake",initials:"MA",title:"Shop Steward",dept:"PSCBC",country:"South Africa",track:"A",
+ welcome:"Welcome, Maipato! As a shop steward in the PSCBC, you represent public service workers in collective bargaining and grievance processes. Your 10 scenarios test how shop stewards develop and apply the skills needed to be effective advocates — from managing workplace conflict to negotiating durable agreements.",
+ learnings:["Shop stewards who understand the full bargaining process — not just formal procedures — are more effective member advocates.","BATNA analysis helps shop stewards give members realistic advice about what outcomes are achievable.","Mutual gains approaches create agreements that workers can ratify enthusiastically rather than reluctantly."]},
+
+{id:"p51",name:"Oscar Fanizane Msweli",initials:"OM",title:"Labour Relations Officer",dept:"PSCBC",country:"South Africa",track:"D",
+ welcome:"Welcome, Oscar! As a Labour Relations Officer at the PSCBC, you help manage the labour relations infrastructure of South Africa's public service. Your 10 scenarios test the practical skills of labour relations work — from conflict diagnosis to mutual gains facilitation and impasse management.",
+ learnings:["Labour relations officers are uniquely positioned to add value at every stage of the collective bargaining process — from preparation to closure.","Understanding what both sides really need — behind their stated positions — is the most important analytical skill in labour relations work.","Structured impasse closure — certificates of non-resolution, clear options advice — protects both parties and the process."]},
+
+{id:"p52",name:"Sharlaine Oodit",initials:"SO",title:"General Secretary",dept:"PSCBC",country:"South Africa",track:"E",
+ welcome:"Welcome, Sharlaine! As General Secretary of the PSCBC, you lead institutional strategy and operations of South Africa's public service bargaining council. Your 10 scenarios test how general secretaries provide strategic leadership in collective bargaining — setting institutional culture, managing complex processes, and leading through difficult moments.",
+ learnings:["General secretaries of bargaining councils have unique authority to shape the culture of collective bargaining in their sector.","Strategic leadership in impasse requires composure, structured communication, and clear options analysis — not reactive decisions.","Mutual gains facilitation at institutional level produces more sustainable labour relations outcomes than positional bargaining management."]},
+
+{id:"p53",name:"Monkie David Phala",initials:"MP",title:"Shop Steward",dept:"PSCBC",country:"South Africa",track:"A",
+ welcome:"Welcome, Monkie! As a shop steward in the PSCBC, you represent public service workers across collective bargaining and dispute processes. Your 10 scenarios test the full range of shop steward skills — from conflict diagnosis and interest analysis to managing impasse and designing outcomes members can accept.",
+ learnings:["The best shop stewards combine knowledge of the formal bargaining process with understanding of the interests behind positions.","Active listening and emotional intelligence are practical skills that improve outcomes in every bargaining interaction.","Knowing your BATNA prevents both unnecessary capitulation and unnecessary escalation in representing your members."]},
+
+{id:"p54",name:"Godfrey Boitumelo Pheleo",initials:"GP",title:"Shop Steward",dept:"PSCBC",country:"South Africa",track:"A",
+ welcome:"Welcome, Godfrey! As a shop steward in the PSCBC, you are a key link between public service workers and the collective bargaining process. Your 10 scenarios test how shop stewards apply the principles of effective negotiation — from reading conflict to finding mutual gains and managing impasse.",
+ learnings:["Shop stewards who understand the ZOPA — even roughly — help their members calibrate expectations and make better decisions about settlement.","Mutual gains bargaining often delivers more to workers than adversarial single-issue tactics.","Face-saving for management is not a concession — it is a tool for closing deals that serve your members."]},
+
+{id:"p55",name:"Christopher Phiri",initials:"CP",title:"Senior Manager",dept:"PSCBC",country:"South Africa",track:"C",
+ welcome:"Welcome, Christopher! As Senior Manager at the PSCBC, you help manage the operational and process functions of South Africa's public service bargaining council. Your 10 scenarios test how senior managers facilitate effective collective bargaining — from process design and conflict management to impasse resolution and agreement communication.",
+ learnings:["Senior managers in bargaining councils shape the quality of collective bargaining through the processes they design and the culture they model.","Option generation in joint sessions — facilitated brainstorming of possibilities before positions are locked — is a powerful tool for breaking impasse.","Formal impasse management is a professional competency: structured, documented, and providing clear advice on next steps."]},
+
+{id:"p56",name:"Mdaezane Samson Radebe",initials:"MR",title:"Labour Relations Officer",dept:"DPSA",country:"South Africa",track:"D",
+ welcome:"Welcome, Samson! As a Labour Relations Officer at the Department of Public Service and Administration (DPSA), you manage labour relations at the apex of South Africa's public service system. Your 10 scenarios test how DPSA labour relations officers support effective collective bargaining across the entire public service.",
+ learnings:["DPSA labour relations officers have system-wide influence — their advice shapes collective bargaining quality across the entire public service.","Understanding what drives disputes — at sector, department, and workplace levels — enables targeted, effective intervention.","BATNA thinking at system level helps DPSA advise government on when and how to intervene in collective bargaining disputes."]},
+
+{id:"p57",name:"Victor Sakala",initials:"VS",title:"Labour Relations Officer",dept:"Public Servants Association",country:"South Africa",track:"D",
+ welcome:"Welcome, Victor! As a Labour Relations Officer at the PSA, you support members and manage labour relations processes across South Africa's public service. Your 10 scenarios test how PSA labour relations officers apply interest-based principles to support effective member representation and durable collective agreements.",
+ learnings:["Labour relations officers who understand interest-based bargaining advise their members and clients more effectively.","Preparing negotiators for the emotional dimensions of bargaining — not just the substantive dimensions — significantly improves outcomes.","Mutual gains thinking creates agreements that members can own and implement, rather than merely accept."]},
+
+{id:"p58",name:"Mathildah Kgomogadi Shaku",initials:"MS",title:"Labour Relations Officer",dept:"PSCBC",country:"South Africa",track:"D",
+ welcome:"Welcome, Mathildah! As a Labour Relations Officer at the PSCBC, you support the collective bargaining infrastructure of South Africa's public service. Your 10 scenarios test how labour relations officers contribute to effective process design, conflict management, and agreement communication in the bargaining council context.",
+ learnings:["Labour relations officers at bargaining councils are uniquely positioned to see both sides of every dispute — use this perspective to facilitate better dialogue.","Interest mapping — helping each party articulate their real needs — is the most powerful facilitation tool available to labour relations officers.","Structured impasse management — not just ad hoc crisis response — produces faster, better, and more legally sound outcomes."]},
+
+{id:"p59",name:"Lesiba Simon Thobakgale",initials:"LT",title:"Shop Steward",dept:"PSCBC",country:"South Africa",track:"A",
+ welcome:"Welcome, Lesiba! As a shop steward in the PSCBC, you represent workers in South Africa's public service collective bargaining system. Your 10 scenarios test how shop stewards develop the skills to be more effective member advocates — from understanding the conflict path to applying mutual gains strategies.",
+ learnings:["Shop stewards who invest in their negotiation skills deliver better outcomes for their members in every bargaining round.","Understanding BATNA and ZOPA gives shop stewards a principled framework for advising members on settlement decisions.","Interest-based approaches in the public service context often reveal that workers' real needs and the employer's real constraints are more compatible than positional bargaining suggests."]},
+
+// ── SWEDEN ──
+{id:"p60",name:"Sonja Bleuland van Oordt",initials:"SB",title:"Co-worker Relations Leader",dept:"Ingka Group (IKEA)",country:"Sweden",track:"B",
+ welcome:"Welcome, Sonja! As Co-worker Relations Leader at Ingka Group, you manage labour relations for one of the world's most recognised retail brands across multiple countries and cultures. Your 10 scenarios test how employer-side HR leaders apply interest-based bargaining principles in multinational, multicultural contexts — and how Ingka's values of fairness and co-worker respect translate into effective collective bargaining practice.",
+ learnings:["Organisations that embed interest-based principles in their collective bargaining culture build more stable, productive labour relations systems.","Multinational employer HR leaders face unique challenges in managing bargaining across legal systems — interest mapping within legal constraints is a core skill.","Co-worker relations that genuinely address underlying needs — not just formal demands — build the trust that makes collective agreements durable."]},
+
+// ── ITCILO STAFF ──
+{id:"p61",name:"Charles Crevier",initials:"CC",title:"Programme Manager, SPGT",dept:"ITCILO",country:"Italy",track:"G",
+ welcome:"Welcome, Charles! As Programme Manager for this course, you will experience the simulation from the perspective of an international HR and labour relations professional — gaining direct insight into the decisions your participants face across diverse national and institutional contexts.",
+ learnings:["Interest-based bargaining principles are universal — they apply across national systems, sectors, and cultural contexts.","The most effective learning simulations embed course content in realistic professional decisions that participants actually face.","Understanding the full negotiation framework — conflict path, interests, BATNA, ZOPA, mutual gains, face-saving — equips professionals to perform at every stage of the collective bargaining process."]}
+];
+
+// ── CONFIG & BACKEND ──────────────────────────────────────────────────────────
+let _backendUrl = null;
+(function loadConfig(){
+  fetch('config.json').then(r=>r.json()).then(cfg=>{
+    if(cfg.backendUrl){ _backendUrl=cfg.backendUrl.replace(/\/$/,''); }
+  }).catch(()=>{});
+})();
+function _sendToBackend(pid,rec){
+  if(!_backendUrl) return;
+  fetch(`${_backendUrl}/negsim/${pid}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(rec)}).catch(()=>{});
+}
+function track(evt,d){
+  const rec={event:evt,ts:Date.now(),...d};
+  try{const key='negsim_'+d.pid;if(evt==='start'){const ex=JSON.parse(localStorage.getItem(key)||'null');if(!ex||ex.status!=='completed')localStorage.setItem(key,JSON.stringify(rec));}else{localStorage.setItem(key,JSON.stringify(rec));}}catch(e){}
+  try{if(_backendUrl===null){setTimeout(()=>_sendToBackend(d.pid,rec),1500);}else{_sendToBackend(d.pid,rec);}}catch(e){}
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let state={pid:null,sidx:0,selected:null,answered:false,score:0,answers:[]};
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo({top:0,behavior:'smooth'});}
+function pData(){return DATA.find(x=>x.id===state.pid);}
+function pScenarios(){return TRACKS[pData().track];}
+
+function countryFlag(c){return c==='Ghana'?'🇬🇭':c==='Nigeria'?'🇳🇬':c==='South Africa'?'🇿🇦':c==='Uzbekistan'?'🇺🇿':c==='Indonesia'?'🇮🇩':c==='Malaysia'?'🇲🇾':c==='Philippines'?'🇵🇭':c==='Sweden'?'🇸🇪':c==='Italy'?'🇮🇹':'🌐';}
+
+// ── PARTICIPANT GRID ──────────────────────────────────────────────────────────
+function buildGrid(){
+  const g=document.getElementById('pGrid');g.innerHTML='';
+  DATA.forEach((par,i)=>{
+    const d=document.createElement('div');d.className='pcard';
+    d.innerHTML=`<div class="pavatar" style="background:${GRAD[i%GRAD.length]}">${par.initials}</div><div class="pname">${par.name}</div><div class="prole">${par.title}</div><div class="pdept">${countryFlag(par.country)} ${par.dept}</div>`;
+    d.onclick=()=>selectParticipant(par.id,i);g.appendChild(d);
+  });
+}
+buildGrid();
+
+function selectParticipant(id,idx){
+  state={pid:id,sidx:0,selected:null,answered:false,score:0,answers:[]};
+  const par=pData();
+  track('start',{pid:par.id,name:par.name,title:par.title,org:par.dept,country:par.country,track:par.track});
+  document.getElementById('pfAvatar').textContent=par.initials;document.getElementById('pfAvatar').style.background=GRAD[idx%GRAD.length];
+  document.getElementById('pfName').textContent=par.name;document.getElementById('pfTitle').textContent=par.title;document.getElementById('pfDept').textContent=par.dept;
+  document.getElementById('pfOrg').innerHTML=`${countryFlag(par.country)}&nbsp; ${par.country}`;
+  document.getElementById('pfMsg').innerHTML=par.welcome;
+  showScreen('screen-profile');
+}
+
+function startSimulation(){state.sidx=0;state.score=0;state.answers=[];renderScenario();showScreen('screen-scenario');}
+function restartSame(){state.sidx=0;state.score=0;state.answers=[];renderScenario();showScreen('screen-scenario');}
+
+function renderScenario(){
+  const par=pData(),sc=pScenarios()[state.sidx],total=pScenarios().length;
+  state.selected=null;state.answered=false;
+  document.getElementById('progFill').style.width=Math.round(state.sidx/total*100)+'%';
+  document.getElementById('progLabel').textContent=`Scenario ${state.sidx+1} of ${total}`;
+  document.getElementById('progScore').textContent=`Score: ${state.score} / ${state.sidx}`;
+  document.getElementById('modTag').textContent=sc.mod;document.getElementById('skillTag').textContent=sc.skill;
+  document.getElementById('ctxBar').innerHTML=`<strong>${par.name}</strong> · ${par.title} · <strong>${par.dept}</strong> · ${par.country}`;
+  document.getElementById('scTitle').textContent=sc.topic;document.getElementById('scSit').textContent=sc.sit;
+  const optsDiv=document.getElementById('optsDiv');optsDiv.innerHTML='';
+  const letters=['A','B','C','D'];
+  sc.opts.forEach((opt,i)=>{
+    const btn=document.createElement('button');btn.className='opt';
+    btn.innerHTML=`<span class="opt-letter">${letters[i]}</span><span>${opt}</span>`;
+    btn.onclick=()=>selectOpt(i);optsDiv.appendChild(btn);
+  });
+  document.getElementById('explDiv').innerHTML='';document.getElementById('explDiv').classList.add('hidden');
+  document.getElementById('submitBtn').classList.remove('hidden');document.getElementById('submitBtn').disabled=true;document.getElementById('submitBtn').style.opacity='0.45';
+  document.getElementById('nextBtn').classList.add('hidden');document.getElementById('finishBtn').classList.add('hidden');document.getElementById('skipBtn').classList.remove('hidden');
+}
+
+function selectOpt(i){
+  if(state.answered)return;state.selected=i;
+  document.querySelectorAll('.opt').forEach((b,j)=>b.classList.toggle('selected',j===i));
+  const sb=document.getElementById('submitBtn');sb.disabled=false;sb.style.opacity='1';
+}
+
+function submitAnswer(){
+  if(state.selected===null||state.answered)return;state.answered=true;
+  const sc=pScenarios()[state.sidx];const correct=state.selected===sc.pref;
+  if(correct)state.score++;state.answers.push({sidx:state.sidx,selected:state.selected,correct});
+  const btns=document.querySelectorAll('.opt');const letters=['A','B','C','D'];
+  btns.forEach((b,i)=>{b.disabled=true;if(i===sc.pref){b.classList.remove('selected');b.classList.add('correct');}else if(i===state.selected&&!correct){b.classList.add('incorrect','was-selected');}else{b.classList.remove('selected');b.classList.add('incorrect');}});
+  const exDiv=document.getElementById('explDiv');exDiv.classList.remove('hidden');
+  const emoji=correct?'✓':'→',titleTxt=correct?'Excellent decision!':`Preferred approach: Option ${letters[sc.pref]}`;
+  exDiv.innerHTML=`<div class="expl"><div class="expl-head"><div class="expl-icon">${emoji}</div><div class="expl-title">${titleTxt}</div></div><div class="expl-text">${sc.expl}</div><div class="mod-ref">📖 ${sc.ref}</div><div class="skill-ref">🎯 ${sc.sref}</div></div>`;
+  document.getElementById('submitBtn').classList.add('hidden');document.getElementById('skipBtn').classList.add('hidden');
+  const isLast=state.sidx>=pScenarios().length-1;
+  if(isLast){document.getElementById('finishBtn').classList.remove('hidden');}else{document.getElementById('nextBtn').classList.remove('hidden');}
+  document.getElementById('progScore').textContent=`Score: ${state.score} / ${state.sidx+1}`;
+}
+
+function nextScenario(){state.sidx++;if(state.sidx>=pScenarios().length){showCompletion();return;}renderScenario();}
+function skipScenario(){if(state.answered)return;state.answers.push({sidx:state.sidx,selected:null,correct:false,skipped:true});state.sidx++;if(state.sidx>=pScenarios().length){showCompletion();return;}renderScenario();}
+
+function showCompletion(){
+  const par=pData();
+  track('complete',{pid:par.id,name:par.name,title:par.title,org:par.dept,country:par.country,track:par.track,score:state.score,total:pScenarios().length});
+  document.getElementById('cSub').textContent=`Well done, ${par.name}! You completed all 10 negotiation scenarios for your role as ${par.title} at ${par.dept}.`;
+  document.getElementById('cScore').textContent=`${state.score} / ${pScenarios().length}`;
+  document.getElementById('cLearnings').innerHTML=par.learnings.map(l=>`<div class="litem"><span class="ldot">▸</span><span>${l}</span></div>`).join('');
+  showScreen('screen-complete');
+}
+</script>
+</body>
+</html>
