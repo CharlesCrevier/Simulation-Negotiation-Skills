@@ -134,7 +134,7 @@ body{font-family:'Inter',system-ui,sans-serif;background:#04091a;color:#f0f4f8;m
     <div class="pf-dept" id="pfDept"></div>
     <div class="org-pill" id="pfOrg"></div>
     <div class="welcome-msg" id="pfMsg"></div>
-    <button class="btn btn-primary" onclick="startSimulation()">Begin Round 1 — 10 Scenarios &rarr;</button>
+    <div id="pfButtons" style="display:flex;flex-direction:column;gap:11px;align-items:center"></div>
   </div>
 </div>
 
@@ -1428,6 +1428,15 @@ function selectParticipant(id,idx){
   document.getElementById('pfName').textContent=par.name;document.getElementById('pfTitle').textContent=par.title;document.getElementById('pfDept').textContent=par.dept;
   document.getElementById('pfOrg').innerHTML=`${countryFlag(par.country)}&nbsp; ${par.country}`;
   document.getElementById('pfMsg').innerHTML=par.welcome;
+  // Show appropriate button(s) based on Round 1 completion
+  let r1Done=false;
+  try{const r1=JSON.parse(localStorage.getItem('negsim_r1_'+par.id)||'null');if(r1&&r1.r1score!=null)r1Done=true;}catch(e){}
+  const btns=document.getElementById('pfButtons');
+  if(r1Done){
+    btns.innerHTML=`<button class="btn btn-primary" style="font-size:16px;padding:14px 36px" onclick="startRound2()">Continue to Round 2 — Advanced &rarr;</button><button class="btn btn-outline" style="font-size:13px" onclick="startSimulation()">Redo Round 1</button>`;
+  }else{
+    btns.innerHTML=`<button class="btn btn-primary" style="font-size:16px;padding:14px 36px" onclick="startSimulation()">Begin Round 1 — 10 Scenarios &rarr;</button>`;
+  }
   showScreen('screen-profile');
 }
 
