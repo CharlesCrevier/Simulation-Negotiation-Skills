@@ -290,31 +290,43 @@ function betterRec(a,b){if(!a)return b;if(!b)return a;return(a.pri??0)>=(b.pri??
 
 function loadData(){
   participation={};
-  // Step 1: read localStorage (participant's own browser data)
+  // Step 1: read localStorage (data from simulations run in this browser)
   ROSTER.forEach(p=>{
     const raw=localStorage.getItem('negsim_'+p.id);
     if(raw){try{const rec=parseRec(JSON.parse(raw));if(rec)participation[p.id]=rec;}catch(e){}}
   });
-  const url=(localStorage.getItem('negsim_track_url')||'').trim();
-  if(url&&url.includes('firebasedatabase')){
-    fetch(`${url.replace(/\/$/,'')}/negsim.json`).then(r=>r.json()).then(data=>{
-      if(!data)return;
-      // Step 2: merge Firebase records — keep whichever is more advanced
-      Object.entries(data).forEach(([pid,d])=>{
-        if(!d)return;
-        const fbRec=parseRec(d);
-        if(!fbRec)return;
-        const merged=betterRec(participation[pid],fbRec);
-        participation[pid]=merged;
-        // Step 3: if local record is better than Firebase, re-sync to fix Firebase
-        if(participation[pid]===participation[pid]&&merged._raw!==d&&merged.pri>(fbRec.pri??0)){
-          const localRaw=merged._raw;
-          if(localRaw){fetch(`${url.replace(/\/$/,'')}/negsim/${pid}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(localRaw)}).catch(()=>{});}
-        }
-      });
-      finishLoad();
+  // Step 2: determine Firebase URL — prefer manually saved URL, fall back to config.json
+  const storedUrl=(localStorage.getItem('negsim_track_url')||'').trim();
+  if(storedUrl&&storedUrl.includes('firebasedatabase')){
+    fetchFromFirebase(storedUrl);
+  } else {
+    fetch('config.json').then(r=>r.json()).then(cfg=>{
+      if(cfg.backendUrl&&cfg.backendUrl.includes('firebasedatabase')){
+        fetchFromFirebase(cfg.backendUrl);
+      } else {finishLoad();}
     }).catch(()=>finishLoad());
-  } else {finishLoad();}
+  }
+}
+
+function fetchFromFirebase(url){
+  const base=url.replace(/\/$/,'');
+  fetch(`${base}/negsim.json`).then(r=>r.json()).then(data=>{
+    if(!data){finishLoad();return;}
+    // Merge Firebase records — keep whichever is more advanced (priority: complete>r1done>started)
+    Object.entries(data).forEach(([pid,d])=>{
+      if(!d)return;
+      const fbRec=parseRec(d);
+      if(!fbRec)return;
+      const local=participation[pid];
+      const merged=betterRec(local,fbRec);
+      participation[pid]=merged;
+      // Re-sync: if local record is better than Firebase, push it back to fix Firebase
+      if(local&&local.pri>(fbRec.pri??0)&&local._raw){
+        fetch(`${base}/negsim/${pid}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(local._raw)}).catch(()=>{});
+      }
+    });
+    finishLoad();
+  }).catch(()=>finishLoad());
 }
 
 function finishLoad(){
