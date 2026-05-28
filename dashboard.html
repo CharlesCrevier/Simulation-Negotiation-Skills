@@ -60,11 +60,14 @@ tr:last-child td{border-bottom:none}
 tr:hover td{background:rgba(255,255,255,.03)}
 .badge-status{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:700}
 .s-done{background:rgba(6,214,160,.15);color:#06d6a0;border:1px solid rgba(6,214,160,.25)}
-.s-started{background:rgba(0,180,216,.15);color:#00b4d8;border:1px solid rgba(0,180,216,.25)}
+.s-r1{background:rgba(0,180,216,.15);color:#00b4d8;border:1px solid rgba(0,180,216,.25)}
+.s-started{background:rgba(144,224,239,.12);color:#90e0ef;border:1px solid rgba(144,224,239,.25)}
 .s-no{background:rgba(255,255,255,.06);color:rgba(255,255,255,.35);border:1px solid rgba(255,255,255,.1)}
-.score-dots{display:flex;gap:3px;align-items:center}
+.score-dots{display:flex;gap:3px;align-items:center;flex-wrap:wrap}
 .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.12)}
 .dot.on{background:#06d6a0}
+.dot.r2on{background:#00b4d8}
+.dot-sep{width:4px;height:8px;border-radius:1px;background:rgba(255,255,255,.08);margin:0 2px}
 .ts{color:rgba(255,255,255,.3);font-size:.73rem}
 #noRows{padding:40px;text-align:center;color:rgba(255,255,255,.25);font-size:.9rem}
 @media(max-width:600px){main{padding:16px}header{padding:16px}}
@@ -119,7 +122,8 @@ tr:hover td{background:rgba(255,255,255,.03)}
   <div class="stats">
     <div class="stat c1"><div class="num" id="sTotal">61</div><div class="lbl">Enrolled</div></div>
     <div class="stat c2"><div class="num" id="sStarted">—</div><div class="lbl">Started</div></div>
-    <div class="stat c3"><div class="num" id="sCompleted">—</div><div class="lbl">Completed</div></div>
+    <div class="stat c3"><div class="num" id="sR1Done">—</div><div class="lbl">Round 1 Done</div></div>
+    <div class="stat c3"><div class="num" id="sCompleted">—</div><div class="lbl">Both Rounds Done</div></div>
     <div class="stat c4"><div class="num" id="sAvg">—</div><div class="lbl">Avg Score</div></div>
   </div>
 
@@ -131,8 +135,9 @@ tr:hover td{background:rgba(255,255,255,.03)}
       <input type="text" id="search" placeholder="Search by name…" oninput="renderTable()">
       <div class="filter-btns">
         <button class="f-btn active" data-filter="all" onclick="setFilter(this)">All (61)</button>
-        <button class="f-btn" data-filter="completed" onclick="setFilter(this)">Completed</button>
-        <button class="f-btn" data-filter="started" onclick="setFilter(this)">Started</button>
+        <button class="f-btn" data-filter="completed" onclick="setFilter(this)">Both rounds done</button>
+        <button class="f-btn" data-filter="r1done" onclick="setFilter(this)">Round 1 done</button>
+        <button class="f-btn" data-filter="started" onclick="setFilter(this)">In progress</button>
         <button class="f-btn" data-filter="not_started" onclick="setFilter(this)">Not started</button>
       </div>
     </div>
@@ -261,7 +266,17 @@ function loadData(){
   participation={};
   ROSTER.forEach(p=>{
     const raw=localStorage.getItem('negsim_'+p.id);
-    if(raw){try{const d=JSON.parse(raw);participation[p.id]={status:d.event==='complete'?'completed':'started',score:d.score??null,total:d.total??10,ts:d.ts};}catch(e){}}
+    if(raw){try{const d=JSON.parse(raw);
+      const bothRounds=d.event==='complete'&&d.round===2;
+      const r1only=d.event==='r1complete'||(d.event==='complete'&&d.round===1);
+      participation[p.id]={
+        status:bothRounds?'completed':r1only?'r1done':'started',
+        score:d.score??null,total:d.total??10,
+        r1score:d.r1score??null,r1total:d.r1total??10,
+        r2score:d.r2score??null,r2total:d.r2total??10,
+        round:d.round??1,ts:d.ts
+      };
+    }catch(e){}}
   });
   const url=(localStorage.getItem('negsim_track_url')||'').trim();
   if(url&&url.includes('firebasedatabase')){
@@ -269,7 +284,15 @@ function loadData(){
       if(!data)return;
       Object.entries(data).forEach(([pid,d])=>{
         if(!d)return;
-        participation[pid]={status:d.event==='complete'?'completed':'started',score:d.score??null,total:d.total??10,ts:d.ts};
+        const bothRounds=d.event==='complete'&&d.round===2;
+        const r1only=d.event==='r1complete'||(d.event==='complete'&&d.round===1);
+        participation[pid]={
+          status:bothRounds?'completed':r1only?'r1done':'started',
+          score:d.score??null,total:d.total??10,
+          r1score:d.r1score??null,r1total:d.r1total??10,
+          r2score:d.r2score??null,r2total:d.r2total??10,
+          round:d.round??1,ts:d.ts
+        };
       });
       finishLoad();
     }).catch(()=>finishLoad());
@@ -284,11 +307,13 @@ function finishLoad(){
 function updateStats(){
   const all=ROSTER.length;
   const started=ROSTER.filter(p=>participation[p.id]).length;
+  const r1done=ROSTER.filter(p=>participation[p.id]?.status==='r1done'||participation[p.id]?.status==='completed').length;
   const completed=ROSTER.filter(p=>participation[p.id]?.status==='completed').length;
   const scores=ROSTER.filter(p=>participation[p.id]?.score!=null).map(p=>participation[p.id].score/participation[p.id].total*100);
   const avg=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):null;
   document.getElementById('sTotal').textContent=all;
   document.getElementById('sStarted').textContent=started;
+  document.getElementById('sR1Done').textContent=r1done;
   document.getElementById('sCompleted').textContent=completed;
   document.getElementById('sAvg').textContent=avg!=null?avg+'%':'—';
 }
@@ -320,7 +345,8 @@ function renderTable(){
   let rows=ROSTER.filter(p=>{
     if(q&&!p.name.toLowerCase().includes(q))return false;
     if(activeFilter==='completed')return participation[p.id]?.status==='completed';
-    if(activeFilter==='started')return participation[p.id]&&participation[p.id].status!=='completed';
+    if(activeFilter==='r1done')return participation[p.id]?.status==='r1done';
+    if(activeFilter==='started')return participation[p.id]&&participation[p.id].status==='started';
     if(activeFilter==='not_started')return !participation[p.id];
     return true;
   });
@@ -329,11 +355,30 @@ function renderTable(){
   document.getElementById('noRows').style.display='none';
   rows.forEach((p,i)=>{
     const part=participation[p.id];
-    const status=part?(part.status==='completed'?'<span class="badge-status s-done">Completed</span>':'<span class="badge-status s-started">In progress</span>'):'<span class="badge-status s-no">Not started</span>';
-    let dots='';if(part?.score!=null){const total=part.total||10;for(let j=0;j<total;j++)dots+=`<div class="dot${j<part.score?' on':''}"></div>`;}
-    const scoreCell=part?.score!=null?`<div class="score-dots">${dots}</div><div style="font-size:.72rem;color:rgba(255,255,255,.4);margin-top:3px">${part.score}/${part.total||10}</div>`:'—';
+    let statusBadge='<span class="badge-status s-no">Not started</span>';
+    if(part){
+      if(part.status==='completed')statusBadge='<span class="badge-status s-done">Both rounds ✓</span>';
+      else if(part.status==='r1done')statusBadge='<span class="badge-status s-r1">Round 1 done</span>';
+      else statusBadge='<span class="badge-status s-started">In progress</span>';
+    }
+    // Build dots: 10 for R1 (green), separator, 10 for R2 (blue)
+    let dots='',scoreText='—';
+    if(part){
+      const r1s=part.r1score,r1t=part.r1total||10,r2s=part.r2score,r2t=part.r2total||10;
+      if(r1s!=null){
+        for(let j=0;j<r1t;j++)dots+=`<div class="dot${j<r1s?' on':''}"></div>`;
+        dots+=`<div class="dot-sep"></div>`;
+        if(r2s!=null){for(let j=0;j<r2t;j++)dots+=`<div class="dot${j<r2s?' r2on':''}"></div>`;scoreText=`${r1s+r2s}/20 (R1:${r1s} R2:${r2s})`;}
+        else{for(let j=0;j<r2t;j++)dots+=`<div class="dot"></div>`;scoreText=`${r1s}/10`;}
+      } else if(part.score!=null){
+        // legacy record
+        for(let j=0;j<(part.total||10);j++)dots+=`<div class="dot${j<part.score?' on':''}"></div>`;
+        scoreText=`${part.score}/${part.total||10}`;
+      }
+    }
+    const scoreCell=dots?`<div class="score-dots">${dots}</div><div style="font-size:.72rem;color:rgba(255,255,255,.4);margin-top:3px">${scoreText}</div>`:'—';
     const ts=part?.ts?`<div class="ts">${new Date(part.ts).toLocaleDateString()} ${new Date(part.ts).toLocaleTimeString()}</div>`:'—';
-    tb.innerHTML+=`<tr><td style="color:rgba(255,255,255,.3)">${i+1}</td><td style="font-weight:600">${p.name}</td><td style="color:rgba(255,255,255,.55)">${p.org}</td><td style="color:rgba(255,255,255,.55)">${p.country}</td><td><span style="background:rgba(0,119,182,.2);color:#48cae4;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700">${TRACK_NAMES[p.track]||p.track}</span></td><td>${status}</td><td>${scoreCell}</td><td>${ts}</td></tr>`;
+    tb.innerHTML+=`<tr><td style="color:rgba(255,255,255,.3)">${i+1}</td><td style="font-weight:600">${p.name}</td><td style="color:rgba(255,255,255,.55)">${p.org}</td><td style="color:rgba(255,255,255,.55)">${p.country}</td><td><span style="background:rgba(0,119,182,.2);color:#48cae4;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700">${TRACK_NAMES[p.track]||p.track}</span></td><td>${statusBadge}</td><td>${scoreCell}</td><td>${ts}</td></tr>`;
   });
 }
 
