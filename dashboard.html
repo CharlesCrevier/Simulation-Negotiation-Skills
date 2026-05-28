@@ -264,37 +264,53 @@ function showSetup(){
   document.getElementById('setupBanner').style.display='block';
 }
 
+// Parse any raw Firebase/localStorage record into a normalised participation object
+function parseRec(d){
+  if(!d)return null;
+  // Priority: complete(both rounds)=3, r1done=2, started=1
+  // Legacy: event==='complete' with no round field = pre-Round2 completion = treat as r1done
+  const bothRounds=d.event==='complete'&&(d.round===2||d.r2score!=null);
+  const r1done=!bothRounds&&(
+    d.event==='r1complete'||
+    (d.event==='complete'&&d.round===1)||
+    (d.event==='complete'&&d.round==null&&d.r2score==null) // legacy record
+  );
+  const pri=bothRounds?3:r1done?2:d.event==='start'?1:0;
+  const r1s=d.r1score??(r1done&&!bothRounds?d.score:null)??null;
+  return{
+    status:bothRounds?'completed':r1done?'r1done':'started',
+    pri,score:d.score??null,total:d.total??10,
+    r1score:r1s,r1total:d.r1total??10,
+    r2score:d.r2score??null,r2total:d.r2total??10,
+    round:d.round??1,ts:d.ts,_raw:d
+  };
+}
+// Return whichever record is more advanced
+function betterRec(a,b){if(!a)return b;if(!b)return a;return(a.pri??0)>=(b.pri??0)?a:b;}
+
 function loadData(){
   participation={};
+  // Step 1: read localStorage (participant's own browser data)
   ROSTER.forEach(p=>{
     const raw=localStorage.getItem('negsim_'+p.id);
-    if(raw){try{const d=JSON.parse(raw);
-      const bothRounds=d.event==='complete'&&d.round===2;
-      const r1only=d.event==='r1complete'||(d.event==='complete'&&d.round===1);
-      participation[p.id]={
-        status:bothRounds?'completed':r1only?'r1done':'started',
-        score:d.score??null,total:d.total??10,
-        r1score:d.r1score??null,r1total:d.r1total??10,
-        r2score:d.r2score??null,r2total:d.r2total??10,
-        round:d.round??1,ts:d.ts
-      };
-    }catch(e){}}
+    if(raw){try{const rec=parseRec(JSON.parse(raw));if(rec)participation[p.id]=rec;}catch(e){}}
   });
   const url=(localStorage.getItem('negsim_track_url')||'').trim();
   if(url&&url.includes('firebasedatabase')){
     fetch(`${url.replace(/\/$/,'')}/negsim.json`).then(r=>r.json()).then(data=>{
       if(!data)return;
+      // Step 2: merge Firebase records — keep whichever is more advanced
       Object.entries(data).forEach(([pid,d])=>{
         if(!d)return;
-        const bothRounds=d.event==='complete'&&d.round===2;
-        const r1only=d.event==='r1complete'||(d.event==='complete'&&d.round===1);
-        participation[pid]={
-          status:bothRounds?'completed':r1only?'r1done':'started',
-          score:d.score??null,total:d.total??10,
-          r1score:d.r1score??null,r1total:d.r1total??10,
-          r2score:d.r2score??null,r2total:d.r2total??10,
-          round:d.round??1,ts:d.ts
-        };
+        const fbRec=parseRec(d);
+        if(!fbRec)return;
+        const merged=betterRec(participation[pid],fbRec);
+        participation[pid]=merged;
+        // Step 3: if local record is better than Firebase, re-sync to fix Firebase
+        if(participation[pid]===participation[pid]&&merged._raw!==d&&merged.pri>(fbRec.pri??0)){
+          const localRaw=merged._raw;
+          if(localRaw){fetch(`${url.replace(/\/$/,'')}/negsim/${pid}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(localRaw)}).catch(()=>{});}
+        }
       });
       finishLoad();
     }).catch(()=>finishLoad());

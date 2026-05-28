@@ -1385,8 +1385,19 @@ function _sendToBackend(pid,rec){
 }
 function track(evt,d){
   const rec={event:evt,ts:Date.now(),...d};
-  try{const key='negsim_'+d.pid;if(evt==='start'){const ex=JSON.parse(localStorage.getItem(key)||'null');if(!ex||ex.status!=='completed')localStorage.setItem(key,JSON.stringify(rec));}else{localStorage.setItem(key,JSON.stringify(rec));}}catch(e){}
-  try{if(_backendUrl===null){setTimeout(()=>_sendToBackend(d.pid,rec),1500);}else{_sendToBackend(d.pid,rec);}}catch(e){}
+  const key='negsim_'+d.pid;
+  const isDone=e=>e==='r1complete'||e==='complete';
+  // For 'start' events: never overwrite an existing completion record
+  if(evt==='start'){
+    let ex=null;try{ex=JSON.parse(localStorage.getItem(key)||'null');}catch(e){}
+    if(ex&&isDone(ex.event))return; // already completed a round — ignore start
+    try{localStorage.setItem(key,JSON.stringify(rec));}catch(e){}
+    try{if(_backendUrl===null){setTimeout(()=>_sendToBackend(d.pid,rec),1500);}else{_sendToBackend(d.pid,rec);}}catch(e){}
+  } else {
+    // Completion events always save and sync
+    try{localStorage.setItem(key,JSON.stringify(rec));}catch(e){}
+    try{if(_backendUrl===null){setTimeout(()=>_sendToBackend(d.pid,rec),1500);}else{_sendToBackend(d.pid,rec);}}catch(e){}
+  }
 }
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
