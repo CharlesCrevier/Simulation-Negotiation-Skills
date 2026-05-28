@@ -222,6 +222,7 @@ const ROSTER = [
 
 function countryFlag(c){return c==='Ghana'?'🇬🇭':c==='Nigeria'?'🇳🇬':c==='South Africa'?'🇿🇦':c==='Uzbekistan'?'🇺🇿':c==='Indonesia'?'🇮🇩':c==='Malaysia'?'🇲🇾':c==='Philippines'?'🇵🇭':c==='Sweden'?'🇸🇪':c==='Italy'?'🇮🇹':'🌐';}
 
+const FIREBASE_URL='https://simulation-negotiation-skills-default-rtdb.europe-west1.firebasedatabase.app';
 let participation={}, activeFilter='all';
 
 function checkGate(){
@@ -295,17 +296,10 @@ function loadData(){
     const raw=localStorage.getItem('negsim_'+p.id);
     if(raw){try{const rec=parseRec(JSON.parse(raw));if(rec)participation[p.id]=rec;}catch(e){}}
   });
-  // Step 2: determine Firebase URL — prefer manually saved URL, fall back to config.json
+  // Step 2: use stored URL if available, otherwise use hardcoded Firebase URL
   const storedUrl=(localStorage.getItem('negsim_track_url')||'').trim();
-  if(storedUrl&&storedUrl.includes('firebasedatabase')){
-    fetchFromFirebase(storedUrl);
-  } else {
-    fetch('config.json').then(r=>r.json()).then(cfg=>{
-      if(cfg.backendUrl&&cfg.backendUrl.includes('firebasedatabase')){
-        fetchFromFirebase(cfg.backendUrl);
-      } else {finishLoad();}
-    }).catch(()=>finishLoad());
-  }
+  const fbUrl=(storedUrl&&storedUrl.includes('firebasedatabase'))?storedUrl:FIREBASE_URL;
+  fetchFromFirebase(fbUrl);
 }
 
 function fetchFromFirebase(url){
