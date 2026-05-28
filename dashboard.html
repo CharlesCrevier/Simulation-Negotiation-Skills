@@ -220,6 +220,8 @@ const ROSTER = [
   {id:'p61',name:'Charles Crevier',org:'ITCILO',country:'Italy',title:'Programme Manager, SPGT',track:'G'},
 ];
 
+function countryFlag(c){return c==='Ghana'?'🇬🇭':c==='Nigeria'?'🇳🇬':c==='South Africa'?'🇿🇦':c==='Uzbekistan'?'🇺🇿':c==='Indonesia'?'🇮🇩':c==='Malaysia'?'🇲🇾':c==='Philippines'?'🇵🇭':c==='Sweden'?'🇸🇪':c==='Italy'?'🇮🇹':'🌐';}
+
 let participation={}, activeFilter='all';
 
 function checkGate(){
@@ -328,7 +330,7 @@ function renderOrgs(){
     const pct=Math.round(done/members.length*100);
     const col=COUNTRY_COLORS[c]||'#0077b6';
     row.innerHTML+=`<div class="org-card">
-      <div class="org-name">${c} <span style="color:rgba(255,255,255,.4);font-weight:400">(${members.length})</span></div>
+      <div class="org-name">${countryFlag(c)} ${c} <span style="color:rgba(255,255,255,.4);font-weight:400">(${members.length})</span></div>
       <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${col}"></div></div>
       <div class="bar-labels"><span>${done} completed</span><span>${started} started</span></div>
     </div>`;
@@ -378,7 +380,7 @@ function renderTable(){
     }
     const scoreCell=dots?`<div class="score-dots">${dots}</div><div style="font-size:.72rem;color:rgba(255,255,255,.4);margin-top:3px">${scoreText}</div>`:'—';
     const ts=part?.ts?`<div class="ts">${new Date(part.ts).toLocaleDateString()} ${new Date(part.ts).toLocaleTimeString()}</div>`:'—';
-    tb.innerHTML+=`<tr><td style="color:rgba(255,255,255,.3)">${i+1}</td><td style="font-weight:600">${p.name}</td><td style="color:rgba(255,255,255,.55)">${p.org}</td><td style="color:rgba(255,255,255,.55)">${p.country}</td><td><span style="background:rgba(0,119,182,.2);color:#48cae4;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700">${TRACK_NAMES[p.track]||p.track}</span></td><td>${statusBadge}</td><td>${scoreCell}</td><td>${ts}</td></tr>`;
+    tb.innerHTML+=`<tr><td style="color:rgba(255,255,255,.3)">${i+1}</td><td style="font-weight:600">${p.name}</td><td style="color:rgba(255,255,255,.55)">${p.org}</td><td style="color:rgba(255,255,255,.55)">${countryFlag(p.country)} ${p.country}</td><td><span style="background:rgba(0,119,182,.2);color:#48cae4;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:700">${TRACK_NAMES[p.track]||p.track}</span></td><td>${statusBadge}</td><td>${scoreCell}</td><td>${ts}</td></tr>`;
   });
 }
 
